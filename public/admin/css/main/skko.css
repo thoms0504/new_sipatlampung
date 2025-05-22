@@ -1,0 +1,44 @@
+.chat-box {
+  position: relative;
+  overflow: auto;
+  max-height: 300px;    
+  margin-left: 16px;
+}
+.form-group {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+.chat-area {
+  max-height: 90px;
+  overflow: auto;
+  border-radius: 10px;
+  margin-right: 10px;
+}
+.send-button {
+  width: 50px;
+  max-height: 37px;
+  border-radius: 10px;
+  margin-top: auto;
+  margin-bottom: 0px;
+}
+
+.konsultasi .card-header{
+  padding: 15px;
+  background-color: #435ebe;
+
+}
+
+.konsultasi .card-body {
+  padding: 0;
+}
+
+.konsultasi .card-header h4{
+  margin: 0;
+  color: white;
+}
+
+.konsultasi .card-footer{
+  background-color: #eeeeee;
+  padding: 8px 16px;
+  border: none;
+}

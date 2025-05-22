@@ -1,0 +1,90 @@
+
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap");
+body {
+  background: linear-gradient(rgba(58, 51, 100, 0.5), rgba(58, 51, 100, 0.5)), url(/PortalUtama/img/gedung_bpsprovlampung.jpg);
+  min-height:auto;
+  background-size: cover;
+  font-family: "Poppins", sans-serif;
+}
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height:100vh;
+}
+#auth {
+  width: 50%;
+  overflow-x: hidden;
+  background-color: rgba(218, 225, 236, 0.356);
+  box-shadow: 0 0.5rem 1rem rgba(black, 0.15);
+  border-radius: 15px;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+#auth #auth-left {
+  color: #fff;
+}
+.auth-title {
+  font-size: 48px;
+  color: #001f4f;
+}
+#auth #auth-left a {
+  background-color: #fff;
+}
+
+.img-fluid {
+  width: 80px;
+}
+
+.mf {
+  margin: 40px;
+}
+.form-group:focus {
+  border-color: #001f4f;
+}
+
+.btn-biru {
+  background-color: #003f9e;
+  color: white;
+}
+.btn-biru:hover, #auth #auth-left a:hover{
+  border: #001f4f;
+  background-color:#001f4f;
+}
+#btn-google {
+  background-color:#001f4f;
+}
+
+.name {
+  color: white;
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+}
+
+@media screen and (max-width: 767px) {
+  .auth-title {
+    font-size: 36px;
+  }
+  #auth {
+    width: 90%;
+  }
+  .img-fluid {
+    width: 60px;
+  }
+  .mf {
+    margin: 10px;
+  }
+}
+
+@media screen and (max-width: 300px) {
+  span {
+    font-size: 12px;
+  }
+  input::placeholder {
+    font-size: 10px;
+  }
+  .form-check {
+    font-size: 12px;
+  }
+}
