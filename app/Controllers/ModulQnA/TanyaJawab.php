@@ -110,9 +110,18 @@ class TanyaJawab extends BaseController
                 'id_penanya' => $penanya['id'],
                 'judul' => $this->request->getVar("judul"),
                 'deskripsi' => nl2br($this->request->getVar("deskripsi")),
+                'file_attachment' => $this->request->getFile("file_attachment") ? $this->request->getFile("file_attachment")->getName() : null,
+                'file_type' => $this->request->getFile("file_attachment") ? $this->request->getFile("file_attachment")->getMimeType() : null,
+                'file_size' => $this->request->getFile("file_attachment") ? $this->request->getFile("file_attachment")->getSize() : null,
                 'status' => 0
             ]);
 
+            $file = $this->request->getFile("file_attachment");
+            if ($file && $file->isValid() && !$file->hasMoved()) {
+                // Pindahkan file ke direktori yang diinginkan
+                $file->move('uploads/pertanyaan', $file->getName());
+            }
+            // Set flashdata untuk pesan sukses
             session()->setFlashdata('sukses', 'Pertanyaan berhasil ditambahkan');
             return redirect()->to("/pertanyaan");
         }
@@ -143,9 +152,13 @@ class TanyaJawab extends BaseController
     $jawaban = $this->jawabanModel->getAnswersWithLikeInfo($id, session()->get('id'), $sort);
 
     $data = [
-        'title' => esc($pertanyaan['judul']) . ' | Sipat Lampung',
+        'id_pertanyaan' => $pertanyaan['id_pertanyaan'],
+        'title' =>  'Pertanyaan | Sipat Lampung',
         'active' => 'qna',
         'pertanyaan' => $pertanyaan,
+        'file_attachment' => $pertanyaan['file_attachment'],
+        'file_type' => $pertanyaan['file_type'],
+        'file_size' => $pertanyaan['file_size'],
         'owner' => $owner,
         'penanya' => $this->userModel->where('id', $pertanyaan['id_penanya'])->first(),
         'jawaban' => $jawaban,
@@ -279,4 +292,30 @@ class TanyaJawab extends BaseController
             return redirect()->to(base_url('/pertanyaan/'));
         }
     }
+
+    public function download($id)
+{
+    // Load model jika belum
+    $model = new PertanyaanModel();
+
+    // Ambil data pertanyaan berdasarkan ID
+    $pertanyaan = $model->find($id);
+
+    if (!$pertanyaan || empty($pertanyaan['file_attachment'])) {
+        return redirect()->back()->with('errors', ['File tidak ditemukan.']);
+    }
+
+    // Handle satu file atau multi file
+    $fileData = $pertanyaan['file_attachment'];
+    $fileName = is_array($fileData) ? $fileData[0]['file_attachment'] ?? '' : $fileData;
+
+    // Lokasi file di server
+    $filePath = FCPATH . 'uploads/pertanyaan/' . $fileName;
+
+    if (!file_exists($filePath)) {
+        return redirect()->back()->with('errors', ['File tidak ditemukan di server.']);
+    }
+
+    return $this->response->download($filePath, null);
+}
 }

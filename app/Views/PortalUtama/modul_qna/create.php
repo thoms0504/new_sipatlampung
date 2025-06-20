@@ -35,7 +35,7 @@
                 <?php endif; ?>
 
                 <!-- Form dengan enctype untuk file upload -->
-                <form action="/pertanyaan/save" method="POST" enctype="multipart/form-data">
+                <form action="/pertanyaan/save" method="POST" enctype="multipart/form-data" id="pertanyaan-form">
                     <?= csrf_field() ?>
                     
                     <div class="mb-3">
@@ -87,7 +87,7 @@
                         <div class="form-text">
                             <small>
                                 <strong>Format yang didukung:</strong> JPG, JPEG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX<br>
-                                <strong>Ukuran maksimal:</strong> 5MB
+                                <strong>Ukuran maksimal:</strong> 10MB
                             </small>
                         </div>
                     </div>
@@ -119,7 +119,7 @@
                     
                     <div class="d-flex justify-content-end gap-2">  
                         <button type="reset" class="btn btn-outline-secondary">Reset</button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="submit-btn">
                             <i class="fas fa-paper-plane me-1"></i> Kirim Pertanyaan
                         </button>
                     </div>
@@ -131,20 +131,23 @@
 
 <!-- JavaScript untuk preview file -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('file_attachment');
     const filePreview = document.getElementById('file-preview');
     const fileName = document.getElementById('file-name');
     const fileSize = document.getElementById('file-size');
+    const form = document.getElementById('pertanyaan-form');
+    const submitBtn = document.getElementById('submit-btn');
 
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         
         if (file) {
-            // Tampilkan preview
-            filePreview.style.display = 'block';
-            fileName.textContent = file.name;
-            fileSize.textContent = formatFileSize(file.size);
+            console.log('File selected:', {
+                name: file.name,
+                size: file.size,
+                type: file.type
+            });
             
             // Validasi ukuran file (5MB = 5242880 bytes)
             if (file.size > 5242880) {
@@ -153,23 +156,83 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Validasi tipe file
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
-                                'application/pdf', 'application/msword', 
-                                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                'application/vnd.ms-excel',
-                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+            // Validasi tipe file - menggunakan extension
+            const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx'];
+            const fileExtension = file.name.split('.').pop().toLowerCase();
             
-            if (!allowedTypes.includes(file.type)) {
-                alert('Tipe file tidak didukung! Gunakan format: JPG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX');
+            if (!allowedExtensions.includes(fileExtension)) {
+                alert('Tipe file tidak didukung! Gunakan format: JPG, JPEG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX');
                 clearFileInput();
                 return;
+            }
+            
+            // Tampilkan preview
+            filePreview.style.display = 'block';
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            
+            // Update icon berdasarkan tipe file
+            const fileIcon = document.querySelector('#file-info i');
+            if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+                fileIcon.className = 'fas fa-image me-2 text-primary';
+            } else if (fileExtension === 'pdf') {
+                fileIcon.className = 'fas fa-file-pdf me-2 text-danger';
+            } else if (['doc', 'docx'].includes(fileExtension)) {
+                fileIcon.className = 'fas fa-file-word me-2 text-primary';
+            } else if (['xls', 'xlsx'].includes(fileExtension)) {
+                fileIcon.className = 'fas fa-file-excel me-2 text-success';
+            } else {
+                fileIcon.className = 'fas fa-file me-2 text-secondary';
             }
             
         } else {
             filePreview.style.display = 'none';
         }
     });
+
+    // Form submission handler
+    form.addEventListener('submit', function(e) {
+        // Validasi form sebelum submit
+        const judul = document.getElementById('judul').value;
+        const deskripsi = document.getElementById('deskripsi').value;
+        
+        if (judul.length < 10) {
+            alert('Judul pertanyaan minimal 10 karakter!');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (deskripsi.length < 20) {
+            alert('Deskripsi pertanyaan minimal 20 karakter!');
+            e.preventDefault();
+            return false;
+        }
+        
+        // Disable submit button to prevent double submission
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Mengirim...';
+        
+        // Log form data for debugging
+        const formData = new FormData(form);
+        console.log('Form submission data:');
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(key + ':', {
+                    name: value.name,
+                    size: value.size,
+                    type: value.type
+                });
+            } else {
+                console.log(key + ':', value);
+            }
+        }
+    });
+
+    // Handle form errors - re-enable submit button
+    if (document.querySelector('.alert-danger')) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Kirim Pertanyaan';
+    }
 });
 
 function clearFileInput() {
@@ -188,6 +251,10 @@ function formatFileSize(bytes) {
 // Reset form
 document.querySelector('button[type="reset"]').addEventListener('click', function() {
     clearFileInput();
+    // Re-enable submit button
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Kirim Pertanyaan';
 });
 </script>
 
