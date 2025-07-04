@@ -130,8 +130,8 @@ class TanyaJawab extends BaseController
     }
 
     public function view($id)
-{
-    $pertanyaan = $this->pertanyaanModel->where('id_pertanyaan', $id)->first();
+    {
+        $pertanyaan = $this->pertanyaanModel->where('id_pertanyaan', $id)->first();
     if (!$pertanyaan) {
         throw new PageNotFoundException("Halaman Tidak Ditemukan");
     }
@@ -142,13 +142,10 @@ class TanyaJawab extends BaseController
         $owner = ($_SESSION['id'] == $pertanyaan['id_penanya']);
     }
 
-    // Ambil sorting parameter dari URL (default: newest)
-    $sort = $this->request->getGet('sort');
-    if (!in_array($sort, ['newest', 'most_liked'])) {
-        $sort = 'newest'; // Default sort jika parameter tidak valid
-    }
+    // Ambil parameter sort dari URL (menggunakan 'sort' bukan 'sortDropdown')
+    $sort = $this->request->getVar('sort') ?? 'newest'; // Default urutan adalah terbaru
 
-    // Ambil jawaban beserta informasi like (passing parameter sort)
+    // Ambil jawaban beserta informasi like dengan parameter sort
     $jawaban = $this->jawabanModel->getAnswersWithLikeInfo($id, session()->get('id'), $sort);
 
     $data = [
@@ -167,36 +164,36 @@ class TanyaJawab extends BaseController
     ];
 
     return view('PortalUtama/modul_qna/detail', $data);
-}
+    }
 
     public function getAnswersWithLikeInfo($id_pertanyaan, $id_user = null, $sort = 'newest')
-{
-    // Buat query builder untuk mendapatkan jawaban
-    $builder = $this->db->table('jawaban');
-    $builder->select('jawaban.*, users.nama_lengkap, users.avatar, 
+    {
+        // Buat query builder untuk mendapatkan jawaban
+        $builder = $this->db->table('jawaban');
+        $builder->select('jawaban.*, users.nama_lengkap, users.avatar, 
                   (SELECT COUNT(*) FROM jawaban_likes WHERE jawaban_likes.id_jawaban = jawaban.id_jawaban) as total_likes');
-    $builder->join('users', 'users.id = jawaban.id_penjawab');
-    $builder->where('jawaban.id_pertanyaan', $id_pertanyaan);
-    
-    // Tambahkan kondisi untuk mengetahui apakah user sudah like jawaban ini
-    if ($id_user) {
-        $builder->select('(SELECT COUNT(*) FROM jawaban_likes WHERE jawaban_likes.id_jawaban = jawaban.id_jawaban AND jawaban_likes.id_user = ' . $id_user . ') as has_liked', FALSE);
-    } else {
-        $builder->select('0 as has_liked');
+        $builder->join('users', 'users.id = jawaban.id_penjawab');
+        $builder->where('jawaban.id_pertanyaan', $id_pertanyaan);
+
+        // Tambahkan kondisi untuk mengetahui apakah user sudah like jawaban ini
+        if ($id_user) {
+            $builder->select('(SELECT COUNT(*) FROM jawaban_likes WHERE jawaban_likes.id_jawaban = jawaban.id_jawaban AND jawaban_likes.id_user = ' . $id_user . ') as has_liked', FALSE);
+        } else {
+            $builder->select('0 as has_liked');
+        }
+
+        // Pengurutan berdasarkan parameter sort
+        if ($sort == 'most_liked') {
+            // Urutkan berdasarkan jumlah like terbanyak, jika sama gunakan tanggal terbaru
+            $builder->orderBy('total_likes', 'DESC');
+            $builder->orderBy('jawaban.created_at', 'DESC');
+        } else {
+            // Default: urutkan berdasarkan tanggal terbaru (newest)
+            $builder->orderBy('jawaban.created_at', 'DESC');
+        }
+
+        return $builder->get()->getResultArray();
     }
-    
-    // Pengurutan berdasarkan parameter sort
-    if ($sort == 'most_liked') {
-        // Urutkan berdasarkan jumlah like terbanyak, jika sama gunakan tanggal terbaru
-        $builder->orderBy('total_likes', 'DESC');
-        $builder->orderBy('jawaban.created_at', 'DESC');
-    } else {
-        // Default: urutkan berdasarkan tanggal terbaru (newest)
-        $builder->orderBy('jawaban.created_at', 'DESC');
-    }
-    
-    return $builder->get()->getResultArray();
-}
 
     public function reply($id_pertanyaan)
     {
@@ -294,28 +291,28 @@ class TanyaJawab extends BaseController
     }
 
     public function download($id)
-{
-    // Load model jika belum
-    $model = new PertanyaanModel();
+    {
+        // Load model jika belum
+        $model = new PertanyaanModel();
 
-    // Ambil data pertanyaan berdasarkan ID
-    $pertanyaan = $model->find($id);
+        // Ambil data pertanyaan berdasarkan ID
+        $pertanyaan = $model->find($id);
 
-    if (!$pertanyaan || empty($pertanyaan['file_attachment'])) {
-        return redirect()->back()->with('errors', ['File tidak ditemukan.']);
+        if (!$pertanyaan || empty($pertanyaan['file_attachment'])) {
+            return redirect()->back()->with('errors', ['File tidak ditemukan.']);
+        }
+
+        // Handle satu file atau multi file
+        $fileData = $pertanyaan['file_attachment'];
+        $fileName = is_array($fileData) ? $fileData[0]['file_attachment'] ?? '' : $fileData;
+
+        // Lokasi file di server
+        $filePath = FCPATH . 'uploads/pertanyaan/' . $fileName;
+
+        if (!file_exists($filePath)) {
+            return redirect()->back()->with('errors', ['File tidak ditemukan di server.']);
+        }
+
+        return $this->response->download($filePath, null);
     }
-
-    // Handle satu file atau multi file
-    $fileData = $pertanyaan['file_attachment'];
-    $fileName = is_array($fileData) ? $fileData[0]['file_attachment'] ?? '' : $fileData;
-
-    // Lokasi file di server
-    $filePath = FCPATH . 'uploads/pertanyaan/' . $fileName;
-
-    if (!file_exists($filePath)) {
-        return redirect()->back()->with('errors', ['File tidak ditemukan di server.']);
-    }
-
-    return $this->response->download($filePath, null);
-}
 }

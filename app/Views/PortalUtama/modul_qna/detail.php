@@ -1,6 +1,9 @@
 <?= $this->extend('PortalUtama/layout/template'); ?>
 <?= $this->section('content'); ?>
 
+
+
+
 <div class="bg-section-title"></div>
 <div class="container">
     <!-- Flash Messages -->
@@ -21,9 +24,29 @@
     <?php endif; ?>
 
     <section>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <a href="<?= base_url('pertanyaan') ?>" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Kembali
+                </a>
+            </div>
+
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 bg-transparent p-0">
+                    <li class="breadcrumb-item">
+                        <a href="<?= base_url('pertanyaan') ?>" class="text-decoration-none">Pertanyaan</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <?= strlen($pertanyaan['judul']) > 30 ? substr($pertanyaan['judul'], 0, 30) . '...' : $pertanyaan['judul'] ?>
+                    </li>
+                </ol>
+            </nav>
+        </div>
         <div class="section-title">
             <h2><?= str_replace(" | Sipat Lampung", "", $title) ?></h2>
         </div>
+
 
         <!-- Card Pertanyaan -->
         <div class="card mt-3 shadow rounded-4 p-4">
@@ -131,15 +154,15 @@
                 <!-- Dropdown untuk mengurutkan jawaban -->
                 <div class="col-md-6 text-right">
                     <div class="dropdown float-right">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <?= ($sort == 'most_liked') ? 'Like Terbanyak' : 'Terbaru' ?>
                         </button>
-                        <div class="dropdown-menu" aria-labelledby="sortDropdown">
-                            <a class="dropdown-item <?= ($sort == 'newest') ? 'active' : '' ?>"
-                                href="<?= base_url('pertanyaan/' . $pertanyaan['id_pertanyaan'] . '?sort=newest') ?>">Terbaru</a>
-                            <a class="dropdown-item <?= ($sort == 'most_liked') ? 'active' : '' ?>"
-                                href="<?= base_url('pertanyaan/' . $pertanyaan['id_pertanyaan'] . '?sort=most_liked') ?>">Like Terbanyak</a>
-                        </div>
+                        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                            <li><a class="dropdown-item <?= ($sort == 'newest') ? 'active' : '' ?>"
+                                    href="<?= base_url('pertanyaan/' . $pertanyaan['id_pertanyaan'] . '?sort=newest') ?>">Terbaru</a></li>
+                            <li><a class="dropdown-item <?= ($sort == 'most_liked') ? 'active' : '' ?>"
+                                    href="<?= base_url('pertanyaan/' . $pertanyaan['id_pertanyaan'] . '?sort=most_liked') ?>">Like Terbanyak</a></li>
+                        </ul>
                     </div>
                 </div>
             </div>

@@ -116,21 +116,23 @@ class JawabanModel extends Model
                     ->countAllResults();
     }
 
-    
-
     // Get answers with like information for the logged-in user
-    public function getAnswersWithLikeInfo($id_pertanyaan, $id_user = null)
-    {
-        $answers = $this->getAnswersForQuestion($id_pertanyaan);
-
-        if ($id_user) {
-            foreach ($answers as &$answer) {
-                $answer['has_liked'] = $this->hasUserLikedAnswer($answer['id_jawaban'], $id_user);
-            }
-        }
-
-        return $answers;
+    public function getAnswersWithLikeInfo($id_pertanyaan, $id_user = null, $sort = 'newest')
+{
+    $builder = $this->db->table('jawaban j');
+    $builder->select('j.*, u.nama_lengkap, u.avatar');
+    $builder->join('users u', 'j.id_penjawab = u.id');
+    $builder->where('j.id_pertanyaan', $id_pertanyaan);
+    
+    // Tambahkan sorting berdasarkan parameter
+    if ($sort === 'most_liked') {
+        $builder->orderBy('j.likes', 'DESC');
+    } else {
+        $builder->orderBy('j.created_at', 'DESC');
     }
+    
+    return $builder->get()->getResultArray();
+}
 
     // Increment like count for a jawaban
     public function incrementLikeCount($id_jawaban)
