@@ -93,4 +93,34 @@ class UserModel extends Model
     {
         return $this->db->table('users')->getWhere(['id' => $id])->getRowArray();
     }
+
+    // Method untuk menonaktifkan pengguna
+    public function deactivateUser($id)
+    {
+        return $this->update($id, ['is_active' => 0]);
+    }
+
+    // Method untuk mengaktifkan pengguna
+    public function activateUser($id)
+    {
+        return $this->update($id, ['is_active' => 1]);
+    }
+
+    // Method untuk mengecek apakah pengguna aktif
+    public function isUserActive($id)
+    {
+        $user = $this->find($id);
+        return $user ? $user['is_active'] == 1 : false;
+    }
+
+    // Method untuk login dengan pengecekan status aktif
+    public function getDataWithActiveCheck($parameter)
+    {
+        $builder = $this->table($this->table);
+        $builder->where('username', $parameter);
+        $builder->orWhere('email', $parameter);
+        $builder->where('is_active', 1); // Hanya user yang aktif
+        $query = $builder->get();
+        return $query->getRowArray();
+    }
 }

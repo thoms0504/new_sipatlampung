@@ -50,6 +50,10 @@ $routes->post('dasbor/getDataTrenjawaban', 'Admin\Dasbor::getDataTrenJawaban');
 
 
 $routes->get('user','Admin\Pengguna::index');
+$routes->post('user/nonaktifkan/(:num)', 'Admin\Pengguna::deactivate/$1');
+$routes->post('user/aktifkan/(:num)', 'Admin\Pengguna::activate/$1');
+$routes->post('user/toggleStatus/(:num)', 'Admin\Pengguna::toggleStatus/$1');
+$routes->delete('user/delete/(:num)', 'Admin\Pengguna::delete/$1');
 
 
 });
