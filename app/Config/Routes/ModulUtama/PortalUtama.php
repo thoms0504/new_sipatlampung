@@ -19,7 +19,8 @@ $routes->get('pertanyaan/(:num)', 'ModulQnA\TanyaJawab::view/$1');
 $routes->post('pertanyaan/save', 'ModulQnA\TanyaJawab::save');
 $routes->post('pertanyaan/reply/(:num)', 'ModulQnA\TanyaJawab::reply/$1');
 $routes->post('pertanyaan/like/(:num)', 'ModulQnA\TanyaJawab::likeJawaban/$1');
-$routes->get('pertanyaan/download/(:num)', 'ModulQnA\TanyaJawab::download/$1');
+$routes->get('pertanyaan/download/(:num)', 'ModulQnA\TanyaJawab::downloadpertanyaan/$1');
+$routes->get('jawaban/download/(:num)', 'ModulQnA\TanyaJawab::downloadjawaban/$1');
 
 $routes->delete('jawaban/(:num)', 'ModulQnA\TanyaJawab::hapusJawaban/$1');
 

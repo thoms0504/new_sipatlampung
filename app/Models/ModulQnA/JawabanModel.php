@@ -12,6 +12,9 @@ class JawabanModel extends Model
         'id_penjawab',
         'id_pertanyaan',
         'isi',
+        'file_attachment',
+        'file_type',
+        'file_size',
         'likes'
     ];
 
@@ -331,5 +334,93 @@ class JawabanModel extends Model
         $query = $builder->get();
         
         return $query->getRowArray()['likes'];
+    }
+
+    public function validateFileUpload($file)
+    {
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
+                        'application/pdf', 'application/msword', 
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.ms-excel',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+        
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        
+        if (!$file->isValid()) {
+            return ['status' => false, 'message' => 'File tidak valid'];
+        }
+        
+        if (!in_array($file->getMimeType(), $allowedTypes)) {
+            return ['status' => false, 'message' => 'Tipe file tidak diizinkan. Hanya gambar (JPG, PNG, GIF) dan dokumen (PDF, DOC, DOCX, XLS, XLSX) yang diperbolehkan.'];
+        }
+        
+        if ($file->getSize() > $maxSize) {
+            return ['status' => false, 'message' => 'Ukuran file terlalu besar. Maksimal 5MB.'];
+        }
+        
+        return ['status' => true, 'message' => 'File valid'];
+    }
+
+    // Handle file upload
+    public function handleFileUpload($file, $uploadPath = 'uploads/pertanyaan/')
+    {
+        if (!$file->isValid()) {
+            return false;
+        }
+
+        // Buat direktori jika belum ada
+        if (!is_dir(WRITEPATH . $uploadPath)) {
+            mkdir(WRITEPATH . $uploadPath, 0755, true);
+        }
+
+        // Generate nama file unik
+        $fileName = $file->getRandomName();
+        
+        // Pindahkan file
+        if ($file->move(WRITEPATH . $uploadPath, $fileName)) {
+            return [
+                'file_name' => $fileName,
+                'file_type' => $file->getMimeType(),
+                'file_size' => $file->getSize(),
+                'file_path' => $uploadPath . $fileName
+            ];
+        }
+        
+        return false;
+    }
+
+    // Get file extension for display
+    public function getFileIcon($fileType)
+    {
+        $icons = [
+            'image/jpeg' => 'fas fa-image',
+            'image/jpg' => 'fas fa-image',
+            'image/png' => 'fas fa-image',
+            'image/gif' => 'fas fa-image',
+            'application/pdf' => 'fas fa-file-pdf',
+            'application/msword' => 'fas fa-file-word',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'fas fa-file-word',
+            'application/vnd.ms-excel' => 'fas fa-file-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'fas fa-file-excel'
+        ];
+        
+        return $icons[$fileType] ?? 'fas fa-file';
+    }
+
+    // Check if file is image
+    public function isImage($fileType)
+    {
+        $imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        return in_array($fileType, $imageTypes);
+    }
+
+    // Delete file attachment
+    public function deleteFileAttachment($fileName, $uploadPath = 'uploads/pertanyaan/')
+    {
+        $filePath = WRITEPATH . $uploadPath . $fileName;
+        if (file_exists($filePath)) {
+            return unlink($filePath);
+        }
+        return false;
     }
 }

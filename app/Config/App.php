@@ -208,5 +208,5 @@ class App extends BaseConfig
     public $sessionExpiration = 7200; // Waktu kedaluwarsa session (dalam detik)
     public $sessionRegenerateDestroy = false; // Regenerate session ID setelah login
 
-    
+    public $maxRequestSize = 10240; // 10MB
 }

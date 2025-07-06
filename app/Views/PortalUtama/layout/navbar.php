@@ -10,10 +10,12 @@
             <ul>
                 <li><a class="nav-link scrollto <?= ($active == 'beranda') ? 'active' : ''; ?>" href="/">Beranda</a>
                 </li>
-                <li class="dropdown"><a class="<?= ($active == 'layanan') ? 'active' : ''; ?>" href="/layanan"><span>Layanan</span>
+                <li class="dropdown"><a class="<?= ($active == 'layanan') ? 'active' : ''; ?>" href="#"><span>Pelayanan</span>
                         <i class="bi bi-chevron-down"></i></a>
                     <ul>
-                        <li><a class="<?= ($active == 'qna') ? 'active' : ''; ?>" href="/#">Tanya Jawab</a>
+                        <li><a class="<?= ($active == 'chat') ? 'active' : ''; ?>" href="/chat">Layanan Data</a>
+                        </li>
+                        <li><a class="<?= ($active == 'qna') ? 'active' : ''; ?>" href="/pertanyaan">Forum Diskusi</a>
                         </li>
                     </ul>
                 </li>

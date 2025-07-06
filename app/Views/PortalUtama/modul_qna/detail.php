@@ -1,7 +1,883 @@
 <?= $this->extend('PortalUtama/layout/template'); ?>
 <?= $this->section('content'); ?>
 
+<style>
+    .auto-resize {
+        min-height: 100px;
+        resize: vertical;
+    }
 
+    .card {
+        border: none;
+    }
+
+    .btn-group .btn {
+        border-radius: 4px;
+        margin: 0 2px;
+    }
+
+    .dropdown-item.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    /* File Attachment Styles */
+    .file-attachment {
+        border: 1px solid #e0e0e0;
+        transition: all 0.2s ease;
+    }
+
+    .file-attachment:hover {
+        border-color: #0d6efd;
+        box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+    }
+
+    .file-attachment-small {
+        border: 1px solid #e0e0e0;
+        font-size: 0.8rem;
+    }
+
+    .preview-image,
+    .preview-image-small {
+        transition: transform 0.2s ease;
+    }
+
+    .preview-image:hover,
+    .preview-image-small:hover {
+        transform: scale(1.05);
+    }
+
+    /* File Upload Area */
+    .file-upload-area {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-color: #dee2e6 !important;
+    }
+
+    .file-upload-area:hover {
+        border-color: #0d6efd !important;
+        background-color: #f8f9fa;
+    }
+
+    .file-upload-area.border-primary {
+        border-color: #0d6efd !important;
+    }
+
+    /* File Preview Items */
+    .file-preview-item {
+        border: 1px solid #e0e0e0;
+        height: 120px;
+    }
+
+    .file-preview-item .card-body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
+    }
+
+    /* Scroll Container untuk Daftar Jawaban */
+    .answers-container {
+        max-height: 600px;
+        /* Bisa disesuaikan sesuai kebutuhan */
+        overflow-y: auto;
+        border-radius: 0 0 1rem 1rem;
+        position: relative;
+    }
+
+    /* Custom Scrollbar untuk container jawaban */
+    .answers-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .answers-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .answers-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+        transition: background 0.3s ease;
+    }
+
+    .answers-container::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    /* Untuk Firefox */
+    .answers-container {
+        scrollbar-width: thin;
+        scrollbar-color: #c1c1c1 #f1f1f1;
+    }
+
+    /* Fade effect untuk menunjukkan ada lebih banyak konten */
+    .answers-container::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .answers-container:not(:hover)::after {
+        opacity: 1;
+    }
+
+    /* Responsive untuk mobile */
+    @media (max-width: 768px) {
+        .answers-container {
+            max-height: 400px;
+            /* Lebih kecil untuk mobile */
+        }
+
+        .answers-container::-webkit-scrollbar {
+            width: 6px;
+        }
+    }
+
+    /* Smooth scrolling behavior */
+    .answers-container {
+        scroll-behavior: smooth;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+
+        .file-attachment,
+        .file-attachment-small {
+            margin-bottom: 1rem;
+        }
+
+        .btn-group {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .btn-group .btn {
+            margin: 0;
+        }
+    }
+
+    /* Loading state for like button */
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+</style>
+
+<style>
+    :root {
+        --primary-color: #667eea;
+        --primary-dark: #5a6fd8;
+        --secondary-color: #764ba2;
+        --accent-color: #f093fb;
+        --light-bg: #f8fafc;
+        --white: #ffffff;
+        --text-primary: #2d3748;
+        --text-secondary: #718096;
+        --border-color: #e2e8f0;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    
+
+    /* Header Section */
+    .header-section {
+        background: var(--white);
+        border-radius: 20px;
+        margin-top: 1rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .header-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    }
+
+    .breadcrumb-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .back-btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: var(--white);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        color: var(--white);
+    }
+
+    .breadcrumb {
+        background: var(--light-bg);
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        margin: 0;
+        border: 1px solid var(--border-color);
+    }
+
+    .breadcrumb-item+.breadcrumb-item::before {
+        content: "→";
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+
+    .breadcrumb-item a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .breadcrumb-item.active {
+        color: var(--text-secondary);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Question Card */
+    .question-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .question-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary-color);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .user-details h6 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .user-details small {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .question-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        line-height: 1.3;
+    }
+
+    .question-content {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin-bottom: 1.5rem;
+    }
+
+    /* File Attachment */
+    .file-attachment-section {
+        background: var(--light-bg);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border: 1px solid var(--border-color);
+    }
+
+    .file-attachment-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    .file-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .file-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-color);
+    }
+
+    .file-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .file-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .file-actions .btn {
+        flex: 1;
+        padding: 0.5rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: var(--white);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+
+    .file-actions .btn:hover {
+        background: var(--primary-color);
+        color: var(--white);
+        border-color: var(--primary-color);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+        margin-top: 1.5rem;
+    }
+
+    .btn-primary-custom {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: var(--white);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-danger-custom {
+        background: linear-gradient(135deg, #e53e3e, #c53030);
+        color: var(--white);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-danger-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Answers Section */
+    .answers-section {
+        background: var(--white);
+        border-radius: 20px;
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .answers-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: var(--white);
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .answers-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .answers-count {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .sort-dropdown {
+        position: relative;
+    }
+
+    .sort-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--white);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .sort-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .answers-container {
+        max-height: 600px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-color) var(--light-bg);
+    }
+
+    .answers-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .answers-container::-webkit-scrollbar-track {
+        background: var(--light-bg);
+    }
+
+    .answers-container::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 4px;
+    }
+
+    .answer-item {
+        padding: 2rem;
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .answer-item:hover {
+        background: var(--light-bg);
+    }
+
+    .answer-item:last-child {
+        border-bottom: none;
+    }
+
+    .answer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .answer-user {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .answer-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--primary-color);
+    }
+
+    .answer-user-info h6 {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .answer-user-info small {
+        color: var(--text-secondary);
+    }
+
+    .answer-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .answer-actions .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        border: 1px solid var(--border-color);
+        background: var(--white);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+
+    .answer-actions .btn:hover {
+        background: var(--primary-color);
+        color: var(--white);
+        border-color: var(--primary-color);
+    }
+
+    .answer-content {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin-bottom: 1.5rem;
+    }
+
+    .like-section {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 1rem;
+    }
+
+    .like-btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: var(--white);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .like-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .like-btn.liked {
+        background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    }
+
+    /* Empty State */
+    .empty-answers {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-answers i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+        opacity: 0.5;
+    }
+
+    .empty-answers h5 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Answer Form */
+    .answer-form {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: var(--shadow-lg);
+        margin-bottom: 2rem;
+    }
+
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .preview-btn {
+        background: var(--light-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .preview-btn:hover {
+        background: var(--primary-color);
+        color: var(--white);
+        border-color: var(--primary-color);
+    }
+
+    .form-control {
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1rem;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .file-upload-area {
+        background: var(--light-bg);
+        border: 2px dashed var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 1.5rem;
+    }
+
+    .file-upload-area:hover {
+        border-color: var(--primary-color);
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .file-upload-icon {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .submit-btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: var(--white);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+        margin-top: 1.5rem;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Login Prompt */
+    .login-prompt {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+        margin-bottom: 2rem;
+    }
+
+    .login-prompt h5 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    .login-prompt p {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .login-btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: var(--white);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .login-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        color: var(--white);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .container {
+            padding: 1rem;
+        }
+
+        .header-section,
+        .question-card,
+        .answers-section,
+        .answer-form,
+        .login-prompt {
+            padding: 1.5rem;
+            border-radius: 16px;
+        }
+
+        .page-title {
+            font-size: 2rem;
+        }
+
+        .question-title {
+            font-size: 1.5rem;
+        }
+
+        .breadcrumb-nav {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .answers-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .answer-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .form-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .answer-actions {
+            flex-direction: column;
+        }
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .question-card,
+    .answers-section,
+    .answer-form,
+    .login-prompt {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .answer-item {
+        animation: fadeInUp 0.4s ease-out;
+    }
+
+    /* Hover Effects */
+    .question-card:hover,
+    .answer-form:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Focus States */
+    .btn:focus,
+    .form-control:focus {
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    /* Loading States */
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+</style>
 
 
 <div class="bg-section-title"></div>
@@ -23,51 +899,44 @@
         </div>
     <?php endif; ?>
 
-    <section>
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <a href="<?= base_url('pertanyaan') ?>" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Kembali
+    <!-- Header Section -->
+        <div class="header-section">
+            <div class="breadcrumb-nav">
+                <a href="<?= base_url('pertanyaan') ?>" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Kembali
                 </a>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="<?= base_url('pertanyaan') ?>">Pertanyaan</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            <?= strlen($pertanyaan['judul']) > 30 ? substr($pertanyaan['judul'], 0, 30) . '...' : $pertanyaan['judul'] ?>
+                        </li>
+                    </ol>
+                </nav>
             </div>
-
-            <!-- Breadcrumb -->
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 bg-transparent p-0">
-                    <li class="breadcrumb-item">
-                        <a href="<?= base_url('pertanyaan') ?>" class="text-decoration-none">Pertanyaan</a>
-                    </li>
-                    <li class="breadcrumb-item active" aria-current="page">
-                        <?= strlen($pertanyaan['judul']) > 30 ? substr($pertanyaan['judul'], 0, 30) . '...' : $pertanyaan['judul'] ?>
-                    </li>
-                </ol>
-            </nav>
-        </div>
-        <div class="section-title">
-            <h2><?= str_replace(" | Sipat Lampung", "", $title) ?></h2>
+            <h1 class="page-title">PERTANYAAN</h1>
         </div>
 
-
+    <section>
         <!-- Card Pertanyaan -->
-        <div class="card mt-3 shadow rounded-4 p-4">
+        <div class="question-card">
             <!-- Info Penanya -->
-            <div class="row ps-3 mb-3 align-items-center">
-                <div class="col-auto">
-                    <img class="rounded-circle"
-                        src="<?= ($penanya['avatar'] != '') ? $penanya['avatar'] : base_url('admin/img/users/default.png') ?>"
-                        style="height: 50px; width: 50px; object-fit: cover;">
-                </div>
-                <div class="col">
-                    <p class="fw-bolder mb-0 fs-5"><?= esc($penanya['nama_lengkap']); ?></p>
-                    <small class="text-muted">
-                        Diperbarui pada <?= date("d M Y H:i", strtotime($pertanyaan['updated_at'])); ?>
-                    </small>
+            <div class="user-info">
+                <img class="user-avatar"
+                    src="<?= ($penanya['avatar'] != '') ? $penanya['avatar'] : base_url('PortalUtama/img/users/default.png') ?>"
+                    alt="Avatar">
+                <div class="user-details">
+                    <h6><?= esc($penanya['nama_lengkap']); ?></h6>
+                    <small>Diperbarui pada <?= date("d M Y H:i", strtotime($pertanyaan['updated_at'])); ?></small>
                 </div>
             </div>
 
             <!-- Konten Pertanyaan -->
-            <h2 class="mb-3"><?= esc($pertanyaan['judul']); ?></h2>
-            <div class="fs-6 pt-2"><?= $pertanyaan['deskripsi']; ?></div>
+            <h2 class="question-title"><?= esc($pertanyaan['judul']); ?></h2>
+            <div class="question-content"><?= $pertanyaan['deskripsi']; ?></div>
 
             <!-- File Lampiran Pertanyaan -->
             <?php if (!empty($pertanyaan['file_attachment'])) : ?>
@@ -125,26 +994,12 @@
                     </div>
                 </div>
             <?php endif; ?>
-
-            <!-- Tombol Edit & Hapus untuk pemilik pertanyaan -->
-            <?php if (isset($_SESSION['id']) && $owner) : ?>
-                <div class="d-flex justify-content-end gap-2 mt-3">
-                    <a href="/pertanyaan/edit/<?= $pertanyaan['id_pertanyaan']; ?>"
-                        class="btn btn-primary" style="width: 80px">Edit</a>
-                    <form name="actionDelete2_Pertanyaan<?= $pertanyaan['id_pertanyaan']; ?>"
-                        action="/pertanyaan/<?= $pertanyaan['id_pertanyaan']; ?>" method="post">
-                        <input type="hidden" name="_method" value="DELETE">
-                        <?= csrf_field() ?>
-                        <button type="button"
-                            onclick="confirmDelete(<?= $pertanyaan['id_pertanyaan']; ?>, 'Pertanyaan', '<?= esc($pertanyaan['judul']); ?>')"
-                            class="btn btn-danger" style="width: 80px">Hapus</button>
-                    </form>
-                </div>
-            <?php endif; ?>
         </div>
 
-        <!-- Daftar Jawaban -->
-        <div class="card py-3 my-4 shadow rounded-4">
+
+
+        <!-- Daftar Jawaban dengan Scroll -->
+        <div class="card py-3 my-4 shadow rounded-4 w-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     Semua Jawaban
@@ -152,8 +1007,8 @@
                 </h5>
 
                 <!-- Dropdown untuk mengurutkan jawaban -->
-                <div class="col-md-6 text-right">
-                    <div class="dropdown float-right">
+                <div class="col-md-6 text-end">
+                    <div class="dropdown ms-auto">
                         <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <?= ($sort == 'most_liked') ? 'Like Terbanyak' : 'Terbaru' ?>
                         </button>
@@ -167,120 +1022,126 @@
                 </div>
             </div>
 
-            <?php if (empty($jawaban)) : ?>
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-comments text-muted mb-3" style="font-size: 3rem;"></i>
-                    <h5 class="text-muted">Belum ada jawaban</h5>
-                </div>
-            <?php else : ?>
-                <?php foreach ($jawaban as $j) : ?>
-                    <div class="border-bottom">
-                        <div class="px-4 pt-3 pb-2">
-                            <div class="d-flex">
-                                <img class="rounded-circle me-3"
-                                    src="<?= ($j['avatar'] != '') ? $j['avatar'] : base_url('admin/img/users/default.png') ?>"
-                                    style="height: 40px; width: 40px; object-fit: cover;">
-                                <div class="flex-grow-1">
-                                    <!-- Header Jawaban -->
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1"><?= esc($j['nama_lengkap']) ?></h6>
-                                            <small class="text-muted">
-                                                <?= date("d M Y H:i", strtotime($j['created_at'])); ?>
-                                            </small>
-                                        </div>
-                                        <?php if (isset($_SESSION['id']) && $_SESSION['id'] == $j['id_penjawab']) : ?>
-                                            <div class="btn-group">
-                                                <a href="/jawaban/edit/<?= $j['id_jawaban']; ?>"
-                                                    class="btn btn-sm btn-outline-primary">Edit</a>
-                                                <form name="actionDelete2_Jawaban<?= $j['id_jawaban']; ?>"
-                                                    action="/jawaban/<?= $j['id_jawaban']; ?>" method="post" class="d-inline">
-                                                    <input type="hidden" name="_method" value="DELETE">
-                                                    <?= csrf_field() ?>
-                                                    <button type="button"
-                                                        onclick="confirmDelete(<?= $j['id_jawaban']; ?>, 'Jawaban', '<?= substr(strip_tags($j['isi']), 0, 30) . '...'; ?>')"
-                                                        class="btn btn-sm btn-outline-danger">Hapus</button>
-                                                </form>
+            <!-- Container dengan scroll untuk daftar jawaban -->
+            <div class="answers-container">
+                <?php if (empty($jawaban)) : ?>
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-comments text-muted mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted">Belum ada jawaban</h5>
+                    </div>
+                <?php else : ?>
+                    <?php foreach ($jawaban as $j) : ?>
+                        <div class="border-bottom">
+                            <div class="px-4 pt-3 pb-2">
+                                <div class="d-flex">
+                                    <img class="rounded-circle me-3"
+                                        src="<?= ($j['avatar'] != '') ? $j['avatar'] : base_url('admin/img/users/default.png') ?>"
+                                        style="height: 40px; width: 40px; object-fit: cover;">
+                                    <div class="flex-grow-1">
+                                        <!-- Header Jawaban -->
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1"><?= esc($j['nama_lengkap']) ?></h6>
+                                                <small class="text-muted">
+                                                    <?= date("d M Y H:i", strtotime($j['created_at'])); ?>
+                                                </small>
                                             </div>
-                                        <?php endif; ?>
-                                    </div>
+                                            <?php if (isset($_SESSION['id']) && $_SESSION['id'] == $j['id_penjawab']) : ?>
+                                                <div class="btn-group">
+                                                    <a href="/jawaban/edit/<?= $j['id_jawaban']; ?>"
+                                                        class="btn btn-sm btn-outline-primary">Edit</a>
+                                                    <form name="actionDelete2_Jawaban<?= $j['id_jawaban']; ?>"
+                                                        action="/jawaban/<?= $j['id_jawaban']; ?>" method="post" class="d-inline">
+                                                        <input type="hidden" name="_method" value="DELETE">
+                                                        <?= csrf_field() ?>
+                                                        <button type="button"
+                                                            onclick="confirmDelete(<?= $j['id_jawaban']; ?>, 'Jawaban', '<?= substr(strip_tags($j['isi']), 0, 30) . '...'; ?>')"
+                                                            class="btn btn-sm btn-outline-danger">Hapus</button>
+                                                    </form>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
 
-                                    <!-- Isi Jawaban -->
-                                    <div class="my-3"><?= $j['isi'] ?></div>
+                                        <!-- Isi Jawaban -->
+                                        <div class="my-3"><?= $j['isi'] ?></div>
 
-                                    <!-- File Lampiran Jawaban -->
-                                    <?php if (!empty($j['files'])) : ?>
-                                        <div class="mt-3">
-                                            <small class="text-muted mb-2 d-block">
-                                                <i class="fas fa-paperclip me-1"></i>File Lampiran
-                                            </small>
-                                            <div class="row g-2">
-                                                <?php foreach ($j['files'] as $file) : ?>
-                                                    <div class="col-md-4 col-lg-3">
-                                                        <div class="card file-attachment-small">
-                                                            <div class="card-body p-2">
-                                                                <?php
-                                                                $fileExt = strtolower(pathinfo($file['nama_file'], PATHINFO_EXTENSION));
-                                                                $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-                                                                ?>
-
-                                                                <?php if ($isImage) : ?>
-                                                                    <div class="text-center mb-1">
-                                                                        <img src="<?= base_url('uploads/jawaban/' . $file['nama_file']) ?>"
-                                                                            class="img-thumbnail preview-image-small"
-                                                                            style="max-height: 60px; cursor: pointer;"
-                                                                            onclick="openImageModal('<?= base_url('uploads/jawaban/' . $file['nama_file']) ?>', '<?= esc($file['nama_asli']) ?>')">
+                                        <!-- File Lampiran Jawaban -->
+                                        <?php if (!empty($j['file_attachment'])) : ?>
+                                            <?php
+                                            $file_jawaban = $j['file_attachment'];
+                                            $fileExt_jawaban = strtolower(pathinfo($file_jawaban, PATHINFO_EXTENSION));
+                                            $isImage_jawaban = in_array($fileExt_jawaban, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                            $isPdf_jawaban = $fileExt_jawaban === 'pdf';
+                                            ?>
+                                            <div class="mt-4">
+                                                <h6 class="fw-bold text-muted mb-3">
+                                                    <i class="fas fa-paperclip me-2"></i>File Lampiran
+                                                </h6>
+                                                <div class="row g-3">
+                                                    <div class="col-md-6 col-lg-4">
+                                                        <div class="card file-attachment">
+                                                            <div class="card-body p-3">
+                                                                <?php if ($isImage_jawaban) : ?>
+                                                                    <div class="text-center mb-2">
+                                                                        <img src="<?= base_url('uploads/pertanyaan/' . $file_jawaban) ?>"
+                                                                            class="img-thumbnail preview-image"
+                                                                            style="max-height: 120px; cursor: pointer;"
+                                                                            onclick="openImageModal('<?= base_url('uploads/pertanyaan/' . $file) ?>', '<?= esc($file_jawaban) ?>')">
+                                                                    </div>
+                                                                <?php elseif ($isPdf_jawaban) : ?>
+                                                                    <div class="text-center mb-2">
+                                                                        <i class="fas fa-file-pdf text-danger" style="font-size: 3rem;"></i>
                                                                     </div>
                                                                 <?php else : ?>
-                                                                    <div class="text-center mb-1">
-                                                                        <i class="fas fa-file text-secondary" style="font-size: 1.5rem;"></i>
+                                                                    <div class="text-center mb-2">
+                                                                        <i class="fas fa-file text-secondary" style="font-size: 3rem;"></i>
                                                                     </div>
                                                                 <?php endif; ?>
 
                                                                 <div class="text-center">
-                                                                    <small class="text-muted d-block" style="font-size: 0.7rem;" title="<?= esc($file['nama_asli']) ?>">
-                                                                        <?= strlen($file['nama_asli']) > 15 ? substr($file['nama_asli'], 0, 15) . '...' : $file['nama_asli'] ?>
+                                                                    <small class="text-muted d-block mb-2" title="<?= esc($file_jawaban) ?>">
+                                                                        <?= strlen($file_jawaban) > 25 ? substr($file_jawaban, 0, 25) . '...' : $file_jawaban ?>
                                                                     </small>
                                                                 </div>
 
-                                                                <div class="d-flex gap-1 mt-1">
-                                                                    <a href="<?= base_url('uploads/jawaban/' . $file['nama_file']) ?>"
-                                                                        class="btn btn-outline-primary btn-sm flex-fill py-0"
-                                                                        target="_blank" style="font-size: 0.7rem;">
+                                                                <div class="d-flex gap-1 mt-2">
+                                                                    <a href="<?= base_url('uploads/jawaban/' . $file_jawaban) ?>"
+                                                                        class="btn btn-outline-primary btn-sm flex-fill"
+                                                                        target="_blank">
                                                                         <i class="fas fa-eye"></i>
                                                                     </a>
-                                                                    <a href="<?= base_url('jawaban/download/' . $file['id_file']) ?>"
-                                                                        class="btn btn-outline-success btn-sm flex-fill py-0" style="font-size: 0.7rem;">
+                                                                    <a href="<?= base_url('jawaban/download/' . $j['file_attachment']) ?>"
+                                                                        class="btn btn-outline-success btn-sm flex-fill">
                                                                         <i class="fas fa-download"></i>
                                                                     </a>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                <?php endforeach; ?>
+                                                </div>
                                             </div>
-                                        </div>
-                                    <?php endif; ?>
+                                        <?php endif; ?>
 
-                                    <!-- Like Button dan Jumlah Like -->
-                                    <div class="text-end mt-3">
-                                        <button onclick="likeJawaban(<?= $j['id_jawaban'] ?>)"
-                                            class="btn btn-sm <?= ($j['has_liked'] ?? false) ? 'btn-primary' : 'btn-outline-primary' ?>">
-                                            <i class="fas fa-thumbs-up"></i>
-                                            <span class="like-count"><?= $j['likes'] ?></span>
-                                        </button>
+                                        <!-- Like Button dan Jumlah Like -->
+                                        <div class="text-end mt-3">
+                                            <button onclick="likeJawaban(<?= $j['id_jawaban'] ?>)"
+                                                class="btn btn-sm <?= ($j['has_liked'] ?? false) ? 'btn-primary' : 'btn-outline-primary' ?>">
+                                                <i class="fas fa-thumbs-up"></i>
+                                                <span class="like-count"><?= $j['likes'] ?></span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
         </div>
 
         <!-- Form Jawaban -->
         <?php if (isset($_SESSION['id'])): ?>
-            <div class="card p-4 my-2 shadow rounded-4">
+            <div class="card p-4 my-2 shadow rounded-4 w-100">
                 <form action="/pertanyaan/reply/<?= $pertanyaan['id_pertanyaan']; ?>" method="POST" enctype="multipart/form-data">
                     <?= csrf_field() ?>
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -587,109 +1448,6 @@
     }
 </script>
 
-<style>
-    .auto-resize {
-        min-height: 100px;
-        resize: vertical;
-    }
-
-    .card {
-        border: none;
-    }
-
-    .btn-group .btn {
-        border-radius: 4px;
-        margin: 0 2px;
-    }
-
-    .dropdown-item.active {
-        background-color: #0d6efd;
-        color: white;
-    }
-
-    /* File Attachment Styles */
-    .file-attachment {
-        border: 1px solid #e0e0e0;
-        transition: all 0.2s ease;
-    }
-
-    .file-attachment:hover {
-        border-color: #0d6efd;
-        box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
-    }
-
-    .file-attachment-small {
-        border: 1px solid #e0e0e0;
-        font-size: 0.8rem;
-    }
-
-    .preview-image,
-    .preview-image-small {
-        transition: transform 0.2s ease;
-    }
-
-    .preview-image:hover,
-    .preview-image-small:hover {
-        transform: scale(1.05);
-    }
-
-    /* File Upload Area */
-    .file-upload-area {
-        cursor: pointer;
-        transition: all 0.2s ease;
-        min-height: 120px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-color: #dee2e6 !important;
-    }
-
-    .file-upload-area:hover {
-        border-color: #0d6efd !important;
-        background-color: #f8f9fa;
-    }
-
-    .file-upload-area.border-primary {
-        border-color: #0d6efd !important;
-    }
-
-    /* File Preview Items */
-    .file-preview-item {
-        border: 1px solid #e0e0e0;
-        height: 120px;
-    }
-
-    .file-preview-item .card-body {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        height: 100%;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-
-        .file-attachment,
-        .file-attachment-small {
-            margin-bottom: 1rem;
-        }
-
-        .btn-group {
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .btn-group .btn {
-            margin: 0;
-        }
-    }
-
-    /* Loading state for like button */
-    .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-</style>
 
 <?= $this->include('PortalUtama/layout/sweetalert') ?>
 <?= $this->endSection(); ?>

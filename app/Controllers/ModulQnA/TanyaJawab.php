@@ -129,41 +129,44 @@ class TanyaJawab extends BaseController
         return redirect()->to("/pertanyaan");
     }
 
+
+
+
     public function view($id)
     {
         $pertanyaan = $this->pertanyaanModel->where('id_pertanyaan', $id)->first();
-    if (!$pertanyaan) {
-        throw new PageNotFoundException("Halaman Tidak Ditemukan");
-    }
+        if (!$pertanyaan) {
+            throw new PageNotFoundException("Halaman Tidak Ditemukan");
+        }
 
-    // Cek apakah user adalah pemilik pertanyaan
-    $owner = false;
-    if (isset($_SESSION['id'])) {
-        $owner = ($_SESSION['id'] == $pertanyaan['id_penanya']);
-    }
+        // Cek apakah user adalah pemilik pertanyaan
+        $owner = false;
+        if (isset($_SESSION['id'])) {
+            $owner = ($_SESSION['id'] == $pertanyaan['id_penanya']);
+        }
 
-    // Ambil parameter sort dari URL (menggunakan 'sort' bukan 'sortDropdown')
-    $sort = $this->request->getVar('sort') ?? 'newest'; // Default urutan adalah terbaru
+        // Ambil parameter sort dari URL (menggunakan 'sort' bukan 'sortDropdown')
+        $sort = $this->request->getVar('sort') ?? 'newest'; // Default urutan adalah terbaru
 
-    // Ambil jawaban beserta informasi like dengan parameter sort
-    $jawaban = $this->jawabanModel->getAnswersWithLikeInfo($id, session()->get('id'), $sort);
+        // Ambil jawaban beserta informasi like dengan parameter sort
+        $jawaban = $this->jawabanModel->getAnswersWithLikeInfo($id, session()->get('id'), $sort);
 
-    $data = [
-        'id_pertanyaan' => $pertanyaan['id_pertanyaan'],
-        'title' =>  'Pertanyaan | Sipat Lampung',
-        'active' => 'qna',
-        'pertanyaan' => $pertanyaan,
-        'file_attachment' => $pertanyaan['file_attachment'],
-        'file_type' => $pertanyaan['file_type'],
-        'file_size' => $pertanyaan['file_size'],
-        'owner' => $owner,
-        'penanya' => $this->userModel->where('id', $pertanyaan['id_penanya'])->first(),
-        'jawaban' => $jawaban,
-        'validation' => Services::validation(),
-        'sort' => $sort, // Tambahkan sort ke data untuk view
-    ];
+        $data = [
+            'id_pertanyaan' => $pertanyaan['id_pertanyaan'],
+            'title' =>  'Pertanyaan | Sipat Lampung',
+            'active' => 'qna',
+            'pertanyaan' => $pertanyaan,
+            'file_attachment' => $pertanyaan['file_attachment'],
+            'file_type' => $pertanyaan['file_type'],
+            'file_size' => $pertanyaan['file_size'],            
+            'owner' => $owner,
+            'penanya' => $this->userModel->where('id', $pertanyaan['id_penanya'])->first(),
+            'jawaban' => $jawaban,
+            'validation' => Services::validation(),
+            'sort' => $sort, // Tambahkan sort ke data untuk view
+        ];
 
-    return view('PortalUtama/modul_qna/detail', $data);
+        return view('PortalUtama/modul_qna/detail', $data);
     }
 
     public function getAnswersWithLikeInfo($id_pertanyaan, $id_user = null, $sort = 'newest')
@@ -196,45 +199,99 @@ class TanyaJawab extends BaseController
     }
 
     public function reply($id_pertanyaan)
-    {
-        // Validasi input
-        if (!$this->validate([
-            'isi' => [
-                'rules' => 'required',
-                'errors' => [
-                    'required' => "Isi Jawaban anda"
-                ]
+{
+    // Validasi input
+    $validation_rules = [
+        'isi' => [
+            'rules' => 'required',
+            'errors' => [
+                'required' => "Isi Jawaban anda"
             ]
-        ])) {
-            return redirect()->to("/pertanyaan/$id_pertanyaan")->withInput();
-        }
+        ]
+    ];
+    
+    // Tambahkan validasi file jika ada file yang diupload
+    $files = $this->request->getFiles();
+    if (!empty($files['files'])) {
+        $validation_rules['files'] = [
+            'rules' => 'uploaded[files]|max_size[files,10240]|ext_in[files,jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx]',
+            'errors' => [
+                'uploaded' => 'Pilih file untuk diupload',
+                'max_size' => 'Ukuran file maksimal 10MB',
+                'ext_in' => 'Format file tidak didukung'
+            ]
+        ];
+    }
+    
+    if (!$this->validate($validation_rules)) {
+        return redirect()->to("/pertanyaan/$id_pertanyaan")->withInput();
+    }
 
-        // Periksa apakah pengguna sudah login
-        if (!session()->has('id')) {
-            session()->setFlashdata("gagal", "Harap masuk terlebih dahulu jika ingin menjawab pertanyaan");
-            return redirect()->to("/masuk");
-        }
+    // Periksa apakah pengguna sudah login
+    if (!session()->has('id')) {
+        session()->setFlashdata("gagal", "Harap masuk terlebih dahulu jika ingin menjawab pertanyaan");
+        return redirect()->to("/masuk");
+    }
 
+    // Periksa apakah method request adalah POST
+    if ($this->request->getMethod() == 'POST') {
         // Ambil data penjawab dari session
         $penjawab = $this->userModel->where('id', session()->get('id'))->first();
 
+        // Handle file upload
+        $file_attachment = null;
+        $file_type = null;
+        $file_size = null;
+        
+        // Pastikan direktori upload ada
+        $upload_path = 'uploads/jawaban';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, true);
+        }
+        
+        $files = $this->request->getFiles();
+        if (!empty($files['files'])) {
+            foreach ($files['files'] as $file) {
+                if ($file->isValid() && !$file->hasMoved()) {
+                    // Ambil informasi file SEBELUM di-move
+                    
+                    $mime_type = $file->getMimeType();
+                    $file_size_temp = $file->getSize();
+                    
+                    // Generate unique filename
+                    $newName = $file->getName();
+                    
+                    // Pindahkan file ke direktori uploads/jawaban
+                    if ($file->move($upload_path, $newName)) {
+                        // Untuk multiple files, kita ambil file pertama saja
+                        if ($file_attachment === null) {
+                            $file_attachment = $newName;
+                            $file_type = $mime_type;
+                            $file_size = $file_size_temp;
+                        }
+                    }
+                }
+            }
+        }
+
         // Data jawaban baru
-        $data = [
+        $this->jawabanModel->save([
             'id_penjawab' => $penjawab['id'],
             'id_pertanyaan' => $id_pertanyaan,
             'isi' => nl2br($this->request->getVar("isi")),
+            'file_attachment' => $file_attachment,
+            'file_type' => $file_type,
+            'file_size' => $file_size,
             'likes' => 0 // Default likes = 0
-        ];
+        ]);
 
-        // Simpan jawaban dan update status pertanyaan
-        if ($this->jawabanModel->simpanJawaban($data)) {
-            session()->setFlashdata('sukses', 'Jawaban berhasil ditambahkan');
-        } else {
-            session()->setFlashdata('gagal', 'Terjadi kesalahan saat menyimpan jawaban');
-        }
-
+        // Set flashdata untuk pesan sukses
+        session()->setFlashdata('sukses', 'Jawaban berhasil ditambahkan');
         return redirect()->to("/pertanyaan/$id_pertanyaan");
     }
+
+    return redirect()->to("/pertanyaan/$id_pertanyaan");
+}
 
     // Fungsi tambahan untuk like jawaban
     public function likeJawaban($id_jawaban)
@@ -290,7 +347,7 @@ class TanyaJawab extends BaseController
         }
     }
 
-    public function download($id)
+    public function downloadpertanyaan($id)
     {
         // Load model jika belum
         $model = new PertanyaanModel();
@@ -308,6 +365,32 @@ class TanyaJawab extends BaseController
 
         // Lokasi file di server
         $filePath = FCPATH . 'uploads/pertanyaan/' . $fileName;
+
+        if (!file_exists($filePath)) {
+            return redirect()->back()->with('errors', ['File tidak ditemukan di server.']);
+        }
+
+        return $this->response->download($filePath, null);
+    }
+
+    public function downloadjawaban($id)
+    {
+        // Load model jika belum
+        $model = new JawabanModel();
+
+        // Ambil data pertanyaan berdasarkan ID
+        $jawaban = $model->find($id);
+
+        if (!$jawaban || empty($jawaban['file_attachment'])) {
+            return redirect()->back()->with('errors', ['File tidak ditemukan.']);
+        }
+
+        // Handle satu file atau multi file
+        $fileData = $jawaban['file_attachment'];
+        $fileName = is_array($fileData) ? $fileData[0]['file_attachment'] ?? '' : $fileData;
+
+        // Lokasi file di server
+        $filePath = FCPATH . 'uploads/jawaban/' . $fileName;
 
         if (!file_exists($filePath)) {
             return redirect()->back()->with('errors', ['File tidak ditemukan di server.']);
