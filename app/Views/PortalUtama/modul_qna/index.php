@@ -189,6 +189,137 @@
   .search-container {
     position: relative;
   }
+
+  /* Hashtag Styles */
+  .hashtag-sidebar {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    position: sticky;
+    top: 20px;
+  }
+
+  .hashtag-sidebar h5 {
+    color: #1e40af;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+
+  .hashtag-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .hashtag-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: #374151;
+    border: 1px solid transparent;
+  }
+
+  .hashtag-item:hover {
+    background: #e0f2fe;
+    border-color: #3b82f6;
+    color: #1e40af;
+    transform: translateX(5px);
+  }
+
+  .hashtag-item.active {
+    background: #3b82f6;
+    color: white;
+  }
+
+  .hashtag-item.active:hover {
+    background: #1e40af;
+    color: white;
+  }
+
+  .hashtag-name {
+    flex: 1;
+    font-size: 0.9rem;
+  }
+
+  .hashtag-count {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+  }
+
+  .active .hashtag-count {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+
+  .question-hashtags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .question-hashtag {
+    background: linear-gradient(135deg, #3b82f6, #1e40af);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .question-hashtag:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    color: white;
+  }
+
+  .filter-reset {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+
+  .filter-reset:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    .hashtag-sidebar {
+      margin-bottom: 2rem;
+      position: static;
+    }
+
+    .hashtag-list {
+      max-height: 200px;
+    }
+  }
 </style>
 
 <!-- Hero Section -->
@@ -228,19 +359,38 @@
             <input class="form-control search-input" type="search" placeholder="Cari pertanyaan yang Anda butuhkan..." aria-label="Search" name="keyword" value="<?= ($keyword) ? $keyword : ''; ?>">
             <i class="fas fa-search icon-search"></i>
           </div>
+          <?php if ($selectedTag): ?>
+            <input type="hidden" name="tag" value="<?= $selectedTag ?>">
+          <?php endif; ?>
           <button class="btn-primary-custom" type="submit" name="submit">
             <i class="fas fa-search me-2"></i>Cari
           </button>
         </form>
+
+        <!-- Filter Status -->
+        <?php if ($selectedTag || $keyword): ?>
+          <div class="mt-3">
+            <?php if ($selectedTag): ?>
+              <span class="badge bg-primary me-2">Filter: #<?= $selectedTag ?></span>
+            <?php endif; ?>
+            <?php if ($keyword): ?>
+              <span class="badge bg-secondary me-2">Pencarian: "<?= $keyword ?>"</span>
+            <?php endif; ?>
+            <a href="/pertanyaan" class="filter-reset">
+              <i class="fas fa-times me-1"></i>Reset Filter
+            </a>
+          </div>
+        <?php endif; ?>
       </div>
     </div>
   </div>
 
-  <!-- Questions Section -->
+  <!-- Questions and Sidebar Section -->
   <div class="mt-5">
     <div class="row">
-      <div class="col-12">
-        <?php if ($pertanyaan == []) : ?>
+      <!-- Main Content -->
+      <div class="col-lg-8">
+        <?php if (empty($pertanyaan)) : ?>
           <div class="no-questions">
             <i class="fas fa-question-circle" style="font-size: 4rem; color: #d1d5db; margin-bottom: 2rem;"></i>
             <h3>Belum Ada Pertanyaan</h3>
@@ -252,14 +402,41 @@
         <?php else : ?>
           <?php foreach ($pertanyaan as $p) : ?>
             <div class="question-card" onclick="window.location='/pertanyaan/<?= $p['id_pertanyaan']; ?>'">
-              <h5 class="question-title"><?= $p['judul']; ?></h5>
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="question-title mb-0"><?= $p['judul']; ?></h5>
+              </div>
+
+              <!-- Display hashtags for this question -->
+              <?php if (!empty($p['hashtags'])): ?>
+                <?php
+                $hashtags = json_decode($p['hashtags'], true);
+                if (is_array($hashtags) && !empty($hashtags)):
+                ?>
+                  <div class="question-hashtags">
+                    <?php foreach ($hashtags as $tag): ?>
+                      <a href="/pertanyaan?tag=<?= urlencode($tag) ?>" class="question-hashtag" onclick="event.stopPropagation();">
+                        #<?= $tag ?>
+                      </a>
+                    <?php endforeach; ?>
+                  </div>
+                <?php endif; ?>
+              <?php endif; ?>
+
               <p class="question-content"><?= word_limiter(str_replace('<br />', "", $p["deskripsi"]), 50) ?></p>
               <div class="d-flex justify-content-between align-items-center mt-3">
                 <span style="color: #6b7280; font-size: 0.9rem;">
                   <i class="fas fa-clock me-1"></i>
                   Baca selengkapnya
                 </span>
-                <i class="fas fa-arrow-right" style="color: #3b82f6;"></i>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="d-flex align-items-center" style="background: rgba(239, 68, 68, 0.1); padding: 0.3rem 0.8rem; border-radius: 12px;">
+                    <i class="fas fa-heart" style="color: #ef4444; margin-right: 0.4rem;"></i>
+                    <span style="color: #ef4444; font-weight: 600; font-size: 0.9rem;">
+                      <?= $p['likes'] ?? 0 ?>
+                    </span>
+                  </div>
+                  <i class="fas fa-arrow-right" style="color: #3b82f6;"></i>
+                </div>
               </div>
             </div>
           <?php endforeach; ?>
@@ -268,6 +445,27 @@
             <?= $pager->links('pertanyaan', 'artikel_pagination') ?>
           </div>
         <?php endif ?>
+      </div>
+
+      <!-- Hashtag Sidebar -->
+      <div class="col-lg-4">
+        <div class="hashtag-sidebar">
+          <h5><i class="fas fa-hashtag me-2"></i>Tag Populer</h5>
+
+          <?php if (!empty($allHashtags)): ?>
+            <div class="hashtag-list">
+              <?php foreach ($allHashtags as $tag => $count): ?>
+                <a href="/pertanyaan?tag=<?= urlencode($tag) ?>"
+                  class="hashtag-item <?= ($selectedTag === $tag) ? 'active' : '' ?>">
+                  <span class="hashtag-name">#<?= $tag ?></span>
+                  <span class="hashtag-count"><?= $count ?></span>
+                </a>
+              <?php endforeach; ?>
+            </div>
+          <?php else: ?>
+            <p class="text-muted small">Belum ada hashtag yang tersedia</p>
+          <?php endif; ?>
+        </div>
       </div>
     </div>
   </div>

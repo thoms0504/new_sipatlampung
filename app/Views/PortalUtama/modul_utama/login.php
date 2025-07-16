@@ -122,8 +122,8 @@
         }
 
         .logo-section img {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             margin-right: 15px;
         }
 

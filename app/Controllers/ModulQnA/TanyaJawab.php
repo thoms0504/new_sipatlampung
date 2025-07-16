@@ -7,6 +7,7 @@ use App\Models\ModulQnA\JawabanModel;
 use App\Models\ModulQnA\PertanyaanModel;
 use App\Models\ModulUtama\UserModel;
 use App\Models\ModulQnA\LikeModel;
+use App\Models\ModulQnA\PertanyaanLikeModel;
 use Config\Services;
 use Codeigniter\Exceptions\PageNotFoundException;
 use Config\Database;
@@ -16,12 +17,14 @@ class TanyaJawab extends BaseController
     protected $pertanyaanModel;
     protected $jawabanModel;
     protected $userModel;
+    protected $pertanyaanLikeModel;
     protected $likeModel;
 
     public function __construct()
     {
         $this->pertanyaanModel = new PertanyaanModel();
         $this->jawabanModel = new JawabanModel();
+        $this->pertanyaanLikeModel = new PertanyaanLikeModel();
         $this->userModel = new UserModel();
         $this->likeModel = new LikeModel();
     }
@@ -29,19 +32,28 @@ class TanyaJawab extends BaseController
     public function index()
     {
         $keyword = $this->request->getVar('keyword');
-        if ($keyword) {
-            $pertanyaan = $this->pertanyaanModel->search($keyword);
+        $selectedTag = $this->request->getVar('tag'); // Parameter untuk filter berdasarkan tag
+
+        if ($keyword || $selectedTag) {
+            $pertanyaan = $this->pertanyaanModel->searchWithTags($keyword, $selectedTag);
         } else {
             $pertanyaan = $this->pertanyaanModel;
         }
+
+        // Ambil semua hashtag yang ada untuk sidebar
+        $allHashtags = $this->pertanyaanModel->getAllHashtags();
+
         helper('text');
         $data = [
             'title' => 'Semua Pertanyaan | Sipat Lampung',
             'keyword' => $keyword,
+            'selectedTag' => $selectedTag,
             'active' => 'qna',
             'pertanyaan' => $pertanyaan->orderBy('created_at', 'desc')->paginate(10, 'pertanyaan'),
             'pager' => $pertanyaan->pager,
+            'allHashtags' => $allHashtags
         ];
+
         if (isset($_SESSION['id']) && $_SESSION['role'] != 'user') {
             session()->setFlashdata("gagal", "Hanya pengguna yang memiliki akses fitur ini di portal utama");
             return redirect()->to("/admin/qna");
@@ -78,20 +90,31 @@ class TanyaJawab extends BaseController
         // Validasi input
         if (!$this->validate([
             'judul' => [
-                'rules' => 'required',
+                'rules' => 'required|min_length[10]|max_length[255]',
                 'errors' => [
-                    'required' => 'Pertanyaan harus diisi'
+                    'required' => 'Judul pertanyaan harus diisi',
+                    'min_length' => 'Judul pertanyaan minimal 10 karakter',
+                    'max_length' => 'Judul pertanyaan maksimal 255 karakter'
                 ]
             ],
             'deskripsi' => [
-                'rules' => 'required',
+                'rules' => 'required|min_length[20]',
                 'errors' => [
-                    'required' => 'Deskripsi pertanyaan harus diisi'
+                    'required' => 'Deskripsi pertanyaan harus diisi',
+                    'min_length' => 'Deskripsi pertanyaan minimal 20 karakter'
+                ]
+            ],
+            'file_attachment' => [
+                'rules' => 'permit_empty|uploaded[file_attachment]|max_size[file_attachment,10240]|ext_in[file_attachment,jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx]',
+                'errors' => [
+                    'uploaded' => 'File gagal diupload',
+                    'max_size' => 'Ukuran file maksimal 10MB',
+                    'ext_in' => 'Format file tidak didukung. Gunakan: JPG, JPEG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX'
                 ]
             ]
         ])) {
-            // Jika validasi gagal, kembali ke form dengan input sebelumnya
-            return redirect()->to('/pertanyaan/create')->withInput();
+            // Jika validasi gagal, kembali ke form dengan input sebelumnya dan error
+            return redirect()->to('/pertanyaan/create')->withInput()->with('validation', $this->validator);
         }
 
         // Periksa apakah pengguna sudah login
@@ -102,39 +125,91 @@ class TanyaJawab extends BaseController
 
         // Periksa apakah method request adalah POST
         if ($this->request->getMethod() == 'POST') {
-            // Ambil data pengguna berdasarkan ID dari session
-            $penanya = $this->userModel->where('id', session()->get('id'))->first();
+            try {
+                // Ambil data pengguna berdasarkan ID dari session
+                $penanya = $this->userModel->where('id', session()->get('id'))->first();
 
-            // Simpan pertanyaan ke database
-            $this->pertanyaanModel->save([
-                'id_penanya' => $penanya['id'],
-                'judul' => $this->request->getVar("judul"),
-                'deskripsi' => nl2br($this->request->getVar("deskripsi")),
-                'file_attachment' => $this->request->getFile("file_attachment") ? $this->request->getFile("file_attachment")->getName() : null,
-                'file_type' => $this->request->getFile("file_attachment") ? $this->request->getFile("file_attachment")->getMimeType() : null,
-                'file_size' => $this->request->getFile("file_attachment") ? $this->request->getFile("file_attachment")->getSize() : null,
-                'status' => 0
-            ]);
+                if (!$penanya) {
+                    session()->setFlashdata("gagal", "Data pengguna tidak ditemukan");
+                    return redirect()->to("/masuk");
+                }
 
-            $file = $this->request->getFile("file_attachment");
-            if ($file && $file->isValid() && !$file->hasMoved()) {
-                // Pindahkan file ke direktori yang diinginkan
-                $file->move('uploads/pertanyaan', $file->getName());
+                // Handle hashtags - PERBAIKAN UTAMA
+                $hashtags = $this->request->getVar('hashtags'); // Sesuai dengan name="hashtags" di form
+                $hashtagArray = [];
+
+                if (!empty($hashtags)) {
+                    $hashtagArray = array_filter(array_map('trim', explode(',', $hashtags)));
+                    // Remove duplicates dan convert ke lowercase
+                    $hashtagArray = array_unique(array_map('strtolower', $hashtagArray));
+                }
+
+                // Handle file upload
+                $file = $this->request->getFile("file_attachment");
+                $fileData = [
+                    'file_attachment' => null,
+                    'file_original_name' => null,
+                    'file_type' => null,
+                    'file_size' => null
+                ];
+
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    // Generate unique filename
+                    $newName = $file->getRandomName();
+
+                    // Pindahkan file ke direktori yang diinginkan
+                    if ($file->move('uploads/pertanyaan', $newName)) {
+                        $fileData = [
+                            'file_attachment' => $newName,
+                            'file_original_name' => $file->getClientName(),
+                            'file_type' => $file->getMimeType(),
+                            'file_size' => $file->getSize()
+                        ];
+                    } else {
+                        session()->setFlashdata("gagal", "Gagal mengupload file");
+                        return redirect()->to('/pertanyaan/create')->withInput();
+                    }
+                }
+
+                // Simpan pertanyaan ke database
+                $saveData = [
+                    'id_penanya' => $penanya['id'],
+                    'judul' => $this->request->getVar("judul"),
+                    'deskripsi' => $this->request->getVar("deskripsi"), // Hapus nl2br, biarkan original
+                    'hashtags' => !empty($hashtagArray) ? json_encode($hashtagArray) : null,
+                    'status' => 0
+                ];
+
+                // Merge dengan data file
+                $saveData = array_merge($saveData, $fileData);
+
+                // Simpan ke database
+                if ($this->pertanyaanModel->save($saveData)) {
+                    session()->setFlashdata('sukses', 'Pertanyaan berhasil ditambahkan');
+                    return redirect()->to("/pertanyaan");
+                } else {
+                    // Jika gagal simpan, hapus file yang sudah diupload
+                    if ($fileData['file_attachment'] && file_exists('uploads/pertanyaan/' . $fileData['file_attachment'])) {
+                        unlink('uploads/pertanyaan/' . $fileData['file_attachment']);
+                    }
+                    session()->setFlashdata("gagal", "Gagal menyimpan pertanyaan");
+                    return redirect()->to('/pertanyaan/create')->withInput();
+                }
+            } catch (\Exception $e) {
+                // Log error
+                log_message('error', 'Error saving pertanyaan: ' . $e->getMessage());
+                session()->setFlashdata("gagal", "Terjadi kesalahan saat menyimpan pertanyaan");
+                return redirect()->to('/pertanyaan/create')->withInput();
             }
-            // Set flashdata untuk pesan sukses
-            session()->setFlashdata('sukses', 'Pertanyaan berhasil ditambahkan');
-            return redirect()->to("/pertanyaan");
         }
 
         return redirect()->to("/pertanyaan");
     }
 
-
-
-
     public function view($id)
     {
         $pertanyaan = $this->pertanyaanModel->where('id_pertanyaan', $id)->first();
+
         if (!$pertanyaan) {
             throw new PageNotFoundException("Halaman Tidak Ditemukan");
         }
@@ -145,29 +220,111 @@ class TanyaJawab extends BaseController
             $owner = ($_SESSION['id'] == $pertanyaan['id_penanya']);
         }
 
-        // Ambil parameter sort dari URL (menggunakan 'sort' bukan 'sortDropdown')
-        $sort = $this->request->getVar('sort') ?? 'newest'; // Default urutan adalah terbaru
+        // Ambil parameter sort dari URL
+        $sort = $this->request->getVar('sort') ?? 'newest';
 
         // Ambil jawaban beserta informasi like dengan parameter sort
         $jawaban = $this->jawabanModel->getAnswersWithLikeInfo($id, session()->get('id'), $sort);
 
+        // Ambil pertanyaan dengan informasi like (tanpa parameter sort)
+        $pertanyaanWithLike = $this->pertanyaanModel->getQuestionWithLikeInfo($id, session()->get('id'));
+
         $data = [
             'id_pertanyaan' => $pertanyaan['id_pertanyaan'],
-            'title' =>  'Pertanyaan | Sipat Lampung',
+            'title' => 'Pertanyaan | Sipat Lampung',
             'active' => 'qna',
             'pertanyaan' => $pertanyaan,
             'file_attachment' => $pertanyaan['file_attachment'],
             'file_type' => $pertanyaan['file_type'],
-            'file_size' => $pertanyaan['file_size'],            
+            'file_size' => $pertanyaan['file_size'],
             'owner' => $owner,
+            'pertanyaanlike' => $pertanyaanWithLike, // Gunakan data yang sudah diproses
             'penanya' => $this->userModel->where('id', $pertanyaan['id_penanya'])->first(),
             'jawaban' => $jawaban,
             'validation' => Services::validation(),
-            'sort' => $sort, // Tambahkan sort ke data untuk view
+            'sort' => $sort,
         ];
 
         return view('PortalUtama/modul_qna/detail', $data);
     }
+
+    public function likeQuestion($id_pertanyaan)
+{
+    $this->response->setHeader('Content-Type', 'application/json');
+    
+    if (!session()->get('id')) {
+        return $this->response->setStatusCode(401)->setJSON([
+            'success' => false, 
+            'message' => 'Silahkan login terlebih dahulu'
+        ]);
+    }
+
+    try {
+        $user_id = session()->get('id');
+        $db = \Config\Database::connect();
+        
+        // Cek apakah user sudah like pertanyaan ini
+        $existingLike = $db->table('pertanyaan_likes')
+            ->where('id_pertanyaan', $id_pertanyaan)
+            ->where('id_user', $user_id)
+            ->get()
+            ->getRowArray();
+
+        if ($existingLike) {
+            // Unlike - hapus berdasarkan composite key
+            $deleteResult = $db->table('pertanyaan_likes')
+                ->where('id_pertanyaan', $id_pertanyaan)
+                ->where('id_user', $user_id)
+                ->delete();
+            
+            if (!$deleteResult) {
+                throw new \Exception('Gagal menghapus like');
+            }
+            
+            $liked = false;
+        } else {
+            // Like
+            $insertResult = $db->table('pertanyaan_likes')
+                ->insert([
+                    'id_pertanyaan' => $id_pertanyaan,
+                    'id_user' => $user_id,
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+            
+            if (!$insertResult) {
+                throw new \Exception('Gagal menambahkan like');
+            }
+            
+            $liked = true;
+        }
+
+        // Update jumlah like di tabel pertanyaan
+        $totalLikes = $db->table('pertanyaan_likes')
+            ->where('id_pertanyaan', $id_pertanyaan)
+            ->countAllResults();
+
+        $updateResult = $db->table('pertanyaan')
+            ->where('id_pertanyaan', $id_pertanyaan)
+            ->update(['likes' => $totalLikes]);
+
+        if (!$updateResult) {
+            throw new \Exception('Gagal mengupdate jumlah like');
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'liked' => $liked,
+            'likes' => $totalLikes
+        ]);
+
+    } catch (\Exception $e) {
+        log_message('error', 'Error in likeQuestion: ' . $e->getMessage());
+        return $this->response->setStatusCode(500)->setJSON([
+            'success' => false,
+            'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+        ]);
+    }
+}
 
     public function getAnswersWithLikeInfo($id_pertanyaan, $id_user = null, $sort = 'newest')
     {
@@ -199,129 +356,193 @@ class TanyaJawab extends BaseController
     }
 
     public function reply($id_pertanyaan)
-{
-    // Validasi input
-    $validation_rules = [
-        'isi' => [
-            'rules' => 'required',
-            'errors' => [
-                'required' => "Isi Jawaban anda"
-            ]
-        ]
-    ];
-    
-    // Tambahkan validasi file jika ada file yang diupload
-    $files = $this->request->getFiles();
-    if (!empty($files['files'])) {
-        $validation_rules['files'] = [
-            'rules' => 'uploaded[files]|max_size[files,10240]|ext_in[files,jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx]',
-            'errors' => [
-                'uploaded' => 'Pilih file untuk diupload',
-                'max_size' => 'Ukuran file maksimal 10MB',
-                'ext_in' => 'Format file tidak didukung'
+    {
+        // Validasi input
+        $validation_rules = [
+            'isi' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => "Isi Jawaban anda"
+                ]
             ]
         ];
-    }
-    
-    if (!$this->validate($validation_rules)) {
-        return redirect()->to("/pertanyaan/$id_pertanyaan")->withInput();
-    }
 
-    // Periksa apakah pengguna sudah login
-    if (!session()->has('id')) {
-        session()->setFlashdata("gagal", "Harap masuk terlebih dahulu jika ingin menjawab pertanyaan");
-        return redirect()->to("/masuk");
-    }
-
-    // Periksa apakah method request adalah POST
-    if ($this->request->getMethod() == 'POST') {
-        // Ambil data penjawab dari session
-        $penjawab = $this->userModel->where('id', session()->get('id'))->first();
-
-        // Handle file upload
-        $file_attachment = null;
-        $file_type = null;
-        $file_size = null;
-        
-        // Pastikan direktori upload ada
-        $upload_path = 'uploads/jawaban';
-        if (!is_dir($upload_path)) {
-            mkdir($upload_path, 0755, true);
-        }
-        
+        // Tambahkan validasi file jika ada file yang diupload
         $files = $this->request->getFiles();
         if (!empty($files['files'])) {
-            foreach ($files['files'] as $file) {
-                if ($file->isValid() && !$file->hasMoved()) {
-                    // Ambil informasi file SEBELUM di-move
-                    
-                    $mime_type = $file->getMimeType();
-                    $file_size_temp = $file->getSize();
-                    
-                    // Generate unique filename
-                    $newName = $file->getName();
-                    
-                    // Pindahkan file ke direktori uploads/jawaban
-                    if ($file->move($upload_path, $newName)) {
-                        // Untuk multiple files, kita ambil file pertama saja
-                        if ($file_attachment === null) {
-                            $file_attachment = $newName;
-                            $file_type = $mime_type;
-                            $file_size = $file_size_temp;
+            $validation_rules['files'] = [
+                'rules' => 'uploaded[files]|max_size[files,10240]|ext_in[files,jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx]',
+                'errors' => [
+                    'uploaded' => 'Pilih file untuk diupload',
+                    'max_size' => 'Ukuran file maksimal 10MB',
+                    'ext_in' => 'Format file tidak didukung'
+                ]
+            ];
+        }
+
+        if (!$this->validate($validation_rules)) {
+            return redirect()->to("/pertanyaan/$id_pertanyaan")->withInput();
+        }
+
+        // Periksa apakah pengguna sudah login
+        if (!session()->has('id')) {
+            session()->setFlashdata("gagal", "Harap masuk terlebih dahulu jika ingin menjawab pertanyaan");
+            return redirect()->to("/masuk");
+        }
+
+        // Periksa apakah method request adalah POST
+        if ($this->request->getMethod() == 'POST') {
+            // Ambil data penjawab dari session
+            $penjawab = $this->userModel->where('id', session()->get('id'))->first();
+
+            // Handle file upload
+            $file_attachment = null;
+            $file_type = null;
+            $file_size = null;
+
+            // Pastikan direktori upload ada
+            $upload_path = 'uploads/jawaban';
+            if (!is_dir($upload_path)) {
+                mkdir($upload_path, 0755, true);
+            }
+
+            $files = $this->request->getFiles();
+            if (!empty($files['files'])) {
+                foreach ($files['files'] as $file) {
+                    if ($file->isValid() && !$file->hasMoved()) {
+                        // Ambil informasi file SEBELUM di-move
+
+                        $mime_type = $file->getMimeType();
+                        $file_size_temp = $file->getSize();
+
+                        // Generate unique filename
+                        $newName = $file->getName();
+
+                        // Pindahkan file ke direktori uploads/jawaban
+                        if ($file->move($upload_path, $newName)) {
+                            // Untuk multiple files, kita ambil file pertama saja
+                            if ($file_attachment === null) {
+                                $file_attachment = $newName;
+                                $file_type = $mime_type;
+                                $file_size = $file_size_temp;
+                            }
                         }
                     }
                 }
             }
+
+            // Data jawaban baru
+            $this->jawabanModel->save([
+                'id_penjawab' => $penjawab['id'],
+                'id_pertanyaan' => $id_pertanyaan,
+                'isi' => nl2br($this->request->getVar("isi")),
+                'file_attachment' => $file_attachment,
+                'file_type' => $file_type,
+                'file_size' => $file_size,
+                'likes' => 0 // Default likes = 0
+            ]);
+
+            // Set flashdata untuk pesan sukses
+            session()->setFlashdata('sukses', 'Jawaban berhasil ditambahkan');
+            return redirect()->to("/pertanyaan/$id_pertanyaan");
         }
 
-        // Data jawaban baru
-        $this->jawabanModel->save([
-            'id_penjawab' => $penjawab['id'],
-            'id_pertanyaan' => $id_pertanyaan,
-            'isi' => nl2br($this->request->getVar("isi")),
-            'file_attachment' => $file_attachment,
-            'file_type' => $file_type,
-            'file_size' => $file_size,
-            'likes' => 0 // Default likes = 0
-        ]);
-
-        // Set flashdata untuk pesan sukses
-        session()->setFlashdata('sukses', 'Jawaban berhasil ditambahkan');
         return redirect()->to("/pertanyaan/$id_pertanyaan");
     }
-
-    return redirect()->to("/pertanyaan/$id_pertanyaan");
-}
 
     // Fungsi tambahan untuk like jawaban
     public function likeJawaban($id_jawaban)
     {
+        $this->response->setHeader('Content-Type', 'application/json');
         // Cek apakah user sudah login
         if (!session()->get('id')) {
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'Login diperlukan'
+                'message' => 'Silahkan login terlebih dahulu'
             ]);
         }
 
-        $userId = session()->get('id');
-        $jawaban = $this->jawabanModel->find($id_jawaban);
+        try {
+            $user_id = session()->get('id');
+            $db = \Config\Database::connect();
 
-        if (!$jawaban) {
+            // Cek apakah user sudah like jawaban ini
+            $existingLike = $db->table('jawaban_likes')
+                ->where('id_jawaban', $id_jawaban)
+                ->where('id_user', $user_id)
+                ->get()
+                ->getRowArray();
+            if ($existingLike) {
+                // Jika sudah like, hapus like
+                $deleteResult = $db->table('jawaban_likes')
+                    ->where('id_jawaban', $id_jawaban)
+                    ->where('id_user', $user_id)
+                    ->delete();
+
+                if (!$deleteResult) {
+                    throw new \Exception('Gagal menghapus like');
+                }
+
+                $liked = false;
+            } else {
+                // Jika belum like, tambahkan like
+                $insertResult = $db->table('jawaban_likes')
+                    ->insert([
+                        'id_jawaban' => $id_jawaban,
+                        'id_user' => $user_id,
+                        'created_at' => date('Y-m-d H:i:s')
+                    ]);
+
+                if (!$insertResult) {
+                    throw new \Exception('Gagal menambahkan like');
+                }
+
+                $liked = true;
+            }
+
+            // Update jumlah like di tabel jawaban
+            $totalLikes = $db->table('jawaban_likes')
+                ->where('id_jawaban', $id_jawaban)
+                ->countAllResults();
+            $updateResult = $db->table('jawaban')
+                ->where('id_jawaban', $id_jawaban)
+                ->update(['likes' => $totalLikes]);
+            if (!$updateResult) {
+                throw new \Exception('Gagal mengupdate jumlah like');
+            }
+            return $this->response->setJSON([
+                'success' => true,
+                'liked' => $liked,
+                'likes' => $totalLikes
+            ]);
+
+            
+        } catch (\Throwable $th) {
+            log_message('error', 'Error in likeJawaban: ' . $th->getMessage());
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'Jawaban tidak ditemukan'
+                'message' => 'Terjadi kesalahan: ' . $th->getMessage()
             ]);
         }
+        // $userId = session()->get('id');
+        // $jawaban = $this->jawabanModel->find($id_jawaban);
 
-        // Toggle like menggunakan JawabanModel
-        $result = $this->jawabanModel->toggleLike($id_jawaban, $userId);
+        // if (!$jawaban) {
+        //     return $this->response->setJSON([
+        //         'success' => false,
+        //         'message' => 'Jawaban tidak ditemukan'
+        //     ]);
+        // }
 
-        return $this->response->setJSON([
-            'success' => true,
-            'result' => $result
-        ]);
+        // // Toggle like menggunakan JawabanModel
+        // $result = $this->jawabanModel->toggleLike($id_jawaban, $userId);
+
+        // return $this->response->setJSON([
+        //     'success' => true,
+        //     'result' => $result
+        // ]);
     }
+
 
     public function hapusJawaban($id_jawaban)
     {
@@ -345,6 +566,21 @@ class TanyaJawab extends BaseController
             session()->setFlashdata('gagal', 'Jawaban tidak ditemukan.');
             return redirect()->to(base_url('/pertanyaan/'));
         }
+    }
+
+    public function getQuestionWithLikeInfo($id_pertanyaan, $id_user = null)
+    {
+        $db = \Config\Database::connect();
+        $builder = $db->table('pertanyaan p');
+        $builder->select('p.*, u.nama_lengkap, u.avatar');
+        $builder->join('users u', 'p.id_penanya = u.id');
+        $builder->where('p.id_pertanyaan', $id_pertanyaan);
+
+        if ($id_user) {
+            $builder->select('(SELECT COUNT(*) FROM pertanyaan_likes pl WHERE pl.id_pertanyaan = p.id_pertanyaan AND pl.id_user = ' . $id_user . ') as has_liked');
+        }
+
+        return $builder->get()->getRowArray(); // getRowArray() karena hanya satu record
     }
 
     public function downloadpertanyaan($id)
@@ -397,5 +633,29 @@ class TanyaJawab extends BaseController
         }
 
         return $this->response->download($filePath, null);
+    }
+
+    public function searchHashtags()
+    {
+        // Pastikan request adalah AJAX
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'Invalid request']);
+        }
+
+        $query = $this->request->getGet('q');
+
+        if (empty($query) || strlen($query) < 1) {
+            return $this->response->setJSON([]);
+        }
+
+        try {
+            // Ambil hashtag yang cocok dengan query
+            $hashtags = $this->pertanyaanModel->searchHashtagsLike($query);
+
+            return $this->response->setJSON($hashtags);
+        } catch (\Exception $e) {
+            log_message('error', 'Error searching hashtags: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
+        }
     }
 }

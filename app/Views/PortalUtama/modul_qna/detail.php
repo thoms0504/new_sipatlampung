@@ -877,6 +877,31 @@
         cursor: not-allowed;
         transform: none;
     }
+
+    .question-hashtags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .question-hashtag {
+    background: linear-gradient(135deg, #3b82f6, #1e40af);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .question-hashtag:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    color: white;
+  }
 </style>
 
 
@@ -936,7 +961,28 @@
 
             <!-- Konten Pertanyaan -->
             <h2 class="question-title"><?= esc($pertanyaan['judul']); ?></h2>
+            <?php if (!empty($pertanyaan['hashtags'])): ?>
+                <?php 
+                $hashtags = json_decode($pertanyaan['hashtags'], true);
+                if (is_array($hashtags) && !empty($hashtags)): 
+                ?>
+                  <div class="question-hashtags">
+                    <?php foreach ($hashtags as $tag): ?>
+                        <a href="#" class="question-hashtag">#<?= $tag ?></a>
+                    <?php endforeach; ?>
+                  </div>
+                <?php endif; ?>
+              <?php endif; ?>
             <div class="question-content"><?= $pertanyaan['deskripsi']; ?></div>
+            <!-- Like Button dan Jumlah Like Pertanyaan-->
+            <div class="text-end mt-3">
+                <button onclick="likePertanyaan(<?= $pertanyaan['id_pertanyaan'] ?>)"
+                    class="btn btn-sm <?= ($pertanyaanlike['has_liked'] ?? false) ? 'btn-primary' : 'btn-outline-primary' ?>">
+                    <i class="fas fa-thumbs-up"></i>
+                    <span class="like-count-pertanyaan"><?= $pertanyaan['likes'] ?></span>
+                </button>
+            </div>
+
 
             <!-- File Lampiran Pertanyaan -->
             <?php if (!empty($pertanyaan['file_attachment'])) : ?>
@@ -1048,8 +1094,8 @@
                                             </div>
                                             <?php if (isset($_SESSION['id']) && $_SESSION['id'] == $j['id_penjawab']) : ?>
                                                 <div class="btn-group">
-                                                    <a href="/jawaban/edit/<?= $j['id_jawaban']; ?>"
-                                                        class="btn btn-sm btn-outline-primary">Edit</a>
+                                                    <!-- <a href="/jawaban/edit/<?= $j['id_jawaban']; ?>"
+                                                        class="btn btn-sm btn-outline-primary">Edit</a> -->
                                                     <form name="actionDelete2_Jawaban<?= $j['id_jawaban']; ?>"
                                                         action="/jawaban/<?= $j['id_jawaban']; ?>" method="post" class="d-inline">
                                                         <input type="hidden" name="_method" value="DELETE">
@@ -1384,6 +1430,57 @@
             .then(data => {
                 if (data.success) {
                     const likeCount = btn.querySelector('.like-count');
+                    likeCount.textContent = data.likes;
+
+                    if (data.liked) {
+                        btn.classList.remove('btn-outline-primary');
+                        btn.classList.add('btn-primary');
+                    } else {
+                        btn.classList.add('btn-outline-primary');
+                        btn.classList.remove('btn-primary');
+                    }
+                } else {
+                    alert(data.message || 'Terjadi kesalahan saat menyukai jawaban');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (error !== 'Not logged in') {
+                    alert('Terjadi kesalahan. Silakan coba lagi.');
+                }
+            })
+            .finally(() => {
+                btn.disabled = false;
+            });
+    }
+
+    function likePertanyaan(id_pertanyaan) {
+        const btn = event.currentTarget;
+        btn.disabled = true;
+
+        fetch(`/pertanyaan/like-question/${id_pertanyaan}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': '<?= csrf_hash() ?>',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else if (response.status === 401) {
+                    alert('Silahkan login terlebih dahulu');
+                    window.location.href = '/masuk';
+                    return Promise.reject('Not logged in');
+                } else {
+                    return Promise.reject('Error: ' + response.status);
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                    const likeCount = btn.querySelector('.like-count-pertanyaan');
                     likeCount.textContent = data.likes;
 
                     if (data.liked) {

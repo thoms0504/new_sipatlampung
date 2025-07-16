@@ -53,7 +53,7 @@
     .section-title {
         font-size: 1.1rem;
         font-weight: 600;
- 
+        text-align: center;
         margin-bottom: 15px;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
@@ -252,7 +252,7 @@
                 <!-- footer kanann -->
                 <div class="col-sm-4">
                     <h5 class="section-title">Hubungi Kami</h5>
-                    <ul class="contact-info-footer p-0 m-0">
+                    <ul class="contact-info-footer p-0 m-0 ">
                         <li>BPS Provinsi Lampung</li>
                         <li>Jl. Basuki Rahmat No.54</li>
                         <li>Bandar Lampung, 13330</li>

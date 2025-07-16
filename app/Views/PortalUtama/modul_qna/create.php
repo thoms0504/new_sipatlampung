@@ -7,7 +7,7 @@
         --primary-blue: #2563eb;
         --secondary-blue: #1e40af;
         --light-blue: #dbeafe;
-        --gradient-bg: linear-gradient(135deg, #001f4f 0%, #3b82f6 100%);
+        --gradient-bg: linear-gradient(135deg, rgb(2, 45, 108) 0%, #001f4f 100%);
         --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         --border-radius: 16px;
     }
@@ -134,6 +134,116 @@
         margin-top: 0.25rem;
     }
 
+    /* Hashtag Styles */
+    .hashtag-container {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        background: #f9fafb;
+        padding: 0.75rem;
+        min-height: 120px;
+        transition: all 0.3s ease;
+        cursor: text;
+    }
+
+    .hashtag-container:focus-within {
+        border-color: var(--primary-blue);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        background: white;
+    }
+
+    .hashtag-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .hashtag-tag {
+        background: var(--primary-blue);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .hashtag-tag:hover {
+        background: var(--secondary-blue);
+        transform: translateY(-1px);
+    }
+
+    .hashtag-tag .remove-tag {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .hashtag-tag .remove-tag:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .hashtag-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .hashtag-prefix {
+        color: var(--primary-blue);
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .hashtag-input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 1rem;
+        flex: 1;
+        min-width: 100px;
+    }
+
+    .hashtag-input::placeholder {
+        color: #9ca3af;
+    }
+
+    .hashtag-suggestions {
+        margin-top: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .hashtag-suggestion {
+        background: #f3f4f6;
+        color: #374151;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+
+    .hashtag-suggestion:hover {
+        background: var(--light-blue);
+        color: var(--primary-blue);
+        border-color: var(--primary-blue);
+    }
+
+    /* File Upload Styles */
     .file-upload-area {
         border: 2px dashed #d1d5db;
         border-radius: 12px;
@@ -248,32 +358,6 @@
         border-left: 4px solid #ef4444;
     }
 
-    .progress-bar {
-        height: 6px;
-        background: #e5e7eb;
-        border-radius: 3px;
-        overflow: hidden;
-        margin-top: 1rem;
-    }
-
-    .progress-fill {
-        height: 100%;
-        background: var(--gradient-bg);
-        transition: width 0.3s ease;
-    }
-
-    .character-count {
-        font-size: 0.875rem;
-        color: #6b7280;
-        text-align: right;
-        margin-top: 0.25rem;
-    }
-
-    .required-star {
-        color: #ef4444;
-        font-weight: bold;
-    }
-
     .floating-elements {
         position: fixed;
         top: 0;
@@ -313,6 +397,75 @@
         bottom: 20%;
         left: 20%;
         animation-delay: 4s;
+    }
+
+    /* Tambahkan CSS untuk autocomplete */
+    .hashtag-autocomplete {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .hashtag-container {
+        position: relative;
+    }
+
+    .autocomplete-list {
+        padding: 0.5rem 0;
+    }
+
+    .autocomplete-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.selected {
+        background-color: #f0f9ff;
+        color: var(--primary-blue);
+    }
+
+    .autocomplete-item.selected {
+        background-color: var(--primary-blue);
+        color: white;
+    }
+
+    .autocomplete-tag {
+        color: var(--primary-blue);
+        font-weight: 500;
+    }
+
+    .autocomplete-count {
+        background: rgba(59, 130, 246, 0.1);
+        color: #6b7280;
+        padding: 0.1rem 0.4rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        margin-left: auto;
+    }
+
+    .selected .autocomplete-count {
+        background: rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .autocomplete-no-results {
+        padding: 1rem;
+        text-align: center;
+        color: #6b7280;
+        font-style: italic;
     }
 
     @keyframes float {
@@ -417,6 +570,45 @@
                                 </div>
                             <?php endif; ?>
                             <div class="form-text">Minimal 20 karakter</div>
+                        </div>
+
+                        <!-- Tambahkan ini ke dalam form section -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-hashtag"></i>
+                                Hashtag <span class="text-muted">(Opsional)</span>
+                            </label>
+                            <div class="hashtag-container" id="hashtag-container">
+                                <div class="hashtag-tags" id="hashtag-tags"></div>
+                                <div class="hashtag-input-wrapper">
+                                    <span class="hashtag-prefix">#</span>
+                                    <input type="text"
+                                        class="hashtag-input"
+                                        id="hashtag-input"
+                                        placeholder="Ketik tag dan tekan Enter atau koma untuk menambahkan"
+                                        autocomplete="off">
+                                </div>
+
+                                <!-- Dropdown autocomplete -->
+                                <div class="hashtag-autocomplete" id="hashtag-autocomplete" style="display: none;">
+                                    <div class="autocomplete-list" id="autocomplete-list"></div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="hashtags" id="hashtags-hidden">
+                            <div class="form-text">
+                                Tambahkan hashtag untuk mengkategorikan pertanyaan Anda. Tekan Enter atau koma untuk menambahkan tag.
+                            </div>
+
+                            <!-- Suggested Hashtags -->
+                            <div class="hashtag-suggestions">
+                                <small class="text-muted me-2">Saran hashtag:</small>
+                                <span class="hashtag-suggestion" data-tag="statistik">statistik</span>
+                                <span class="hashtag-suggestion" data-tag="sensus">sensus</span>
+                                <span class="hashtag-suggestion" data-tag="ekonomi">ekonomi</span>
+                                <span class="hashtag-suggestion" data-tag="penduduk">penduduk</span>
+                                <span class="hashtag-suggestion" data-tag="laporan">laporan</span>
+                                <span class="hashtag-suggestion" data-tag="data">data</span>
+                            </div>
                         </div>
 
                         <!-- File Upload Section -->
@@ -611,6 +803,203 @@
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Kirim Pertanyaan';
     });
+
+    // Hashtag functionality dengan autocomplete
+    const hashtagInput = document.getElementById('hashtag-input');
+    const hashtagTags = document.getElementById('hashtag-tags');
+    const hashtagsHidden = document.getElementById('hashtags-hidden');
+    const hashtagContainer = document.getElementById('hashtag-container');
+    const autocompleteDropdown = document.getElementById('hashtag-autocomplete');
+    const autocompleteList = document.getElementById('autocomplete-list');
+    const suggestions = document.querySelectorAll('.hashtag-suggestion');
+    
+    let tags = [];
+    let selectedIndex = -1;
+    let autocompleteData = [];
+    let debounceTimer;
+
+    // Focus hashtag container when clicked
+    hashtagContainer.addEventListener('click', function() {
+        hashtagInput.focus();
+    });
+
+    // Handle hashtag input with autocomplete
+    hashtagInput.addEventListener('input', function(e) {
+        clearTimeout(debounceTimer);
+        const query = e.target.value.trim();
+        
+        if (query.length >= 1) {
+            debounceTimer = setTimeout(() => {
+                fetchHashtagSuggestions(query);
+            }, 300);
+        } else {
+            hideAutocomplete();
+        }
+    });
+
+    // Handle keyboard navigation
+    hashtagInput.addEventListener('keydown', function(e) {
+        const items = autocompleteList.querySelectorAll('.autocomplete-item');
+        
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            if (selectedIndex >= 0 && items[selectedIndex]) {
+                const selectedTag = items[selectedIndex].dataset.tag;
+                addTagFromInput(selectedTag);
+            } else {
+                addTag();
+            }
+        } else if (e.key === 'Escape') {
+            hideAutocomplete();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateSelection();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, -1);
+            updateSelection();
+        } else if (e.key === 'Backspace' && hashtagInput.value === '' && tags.length > 0) {
+            removeTag(tags.length - 1);
+        }
+    });
+
+    // Hide autocomplete when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!hashtagContainer.contains(e.target)) {
+            hideAutocomplete();
+        }
+    });
+
+    // Handle suggestion clicks
+    suggestions.forEach(suggestion => {
+        suggestion.addEventListener('click', function() {
+            const tag = this.dataset.tag;
+            if (!tags.includes(tag)) {
+                hashtagInput.value = tag;
+                addTag();
+            }
+        });
+    });
+
+    function fetchHashtagSuggestions(query) {
+        // Fetch hashtag suggestions from server
+        fetch(`/pertanyaan/search-hashtags?q=${encodeURIComponent(query)}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            autocompleteData = data;
+            showAutocomplete(data, query);
+        })
+        .catch(error => {
+            console.error('Error fetching hashtags:', error);
+            hideAutocomplete();
+        });
+    }
+
+    function showAutocomplete(data, query) {
+        if (data.length === 0) {
+            autocompleteList.innerHTML = '<div class="autocomplete-no-results">Tidak ada tag yang ditemukan</div>';
+        } else {
+            autocompleteList.innerHTML = data.map((item, index) => `
+                <div class="autocomplete-item" data-tag="${item.tag}" data-index="${index}">
+                    <span class="autocomplete-tag">#${highlightMatch(item.tag, query)}</span>
+                    <span class="autocomplete-count">${item.count}</span>
+                </div>
+            `).join('');
+
+            // Add click listeners to items
+            autocompleteList.querySelectorAll('.autocomplete-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const tag = this.dataset.tag;
+                    addTagFromInput(tag);
+                });
+            });
+        }
+
+        selectedIndex = -1;
+        autocompleteDropdown.style.display = 'block';
+    }
+
+    function hideAutocomplete() {
+        autocompleteDropdown.style.display = 'none';
+        selectedIndex = -1;
+    }
+
+    function updateSelection() {
+        const items = autocompleteList.querySelectorAll('.autocomplete-item');
+        items.forEach((item, index) => {
+            item.classList.toggle('selected', index === selectedIndex);
+        });
+    }
+
+    function highlightMatch(text, query) {
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.replace(regex, '<strong>$1</strong>');
+    }
+
+    function addTag() {
+        const value = hashtagInput.value.trim().toLowerCase();
+        if (value && !tags.includes(value)) {
+            tags.push(value);
+            updateTagsDisplay();
+            updateHiddenInput();
+            hashtagInput.value = '';
+            hideAutocomplete();
+        }
+    }
+
+    function addTagFromInput(tag) {
+        if (tag && !tags.includes(tag)) {
+            tags.push(tag);
+            updateTagsDisplay();
+            updateHiddenInput();
+            hashtagInput.value = '';
+            hideAutocomplete();
+        }
+    }
+
+    function removeTag(index) {
+        tags.splice(index, 1);
+        updateTagsDisplay();
+        updateHiddenInput();
+    }
+
+    function updateTagsDisplay() {
+        hashtagTags.innerHTML = '';
+        tags.forEach((tag, index) => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'hashtag-tag';
+            tagElement.innerHTML = `
+                #${tag}
+                <button type="button" class="remove-tag" onclick="removeHashtag(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            hashtagTags.appendChild(tagElement);
+        });
+    }
+
+    function updateHiddenInput() {
+        hashtagsHidden.value = tags.join(',');
+    }
+
+    // Global function for removing hashtags (accessible from onclick)
+    window.removeHashtag = function(index) {
+        removeTag(index);
+    };
+
+    // File upload functionality (existing code)
+    const fileInput = document.getElementById('file_attachment');
+    const filePreview = document.getElementById('file-preview');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const form = document.getElementById('pertanyaan-form');
+    const submitBtn = document.getElementById('submit-btn');
 </script>
 
 <?= $this->endSection(); ?>
