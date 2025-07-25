@@ -22,7 +22,7 @@ class Repo extends BaseController
     public function index()
     {
         $data = [
-            'title' => 'Repository | Sipat Lampung',
+            'title' => 'Repository | Ruwai Jurai',
             'repo' => $this->repoModel->orderBy("tgl_upload","deskripsi")->findAll(),
             'active' => 'semua_repo'
         ];
@@ -31,7 +31,7 @@ class Repo extends BaseController
 
     public function create_repo(){
         $data = [
-            'title' => 'Tambah Repo | Sipat Lampung',
+            'title' => 'Tambah Repo | Ruwai Jurai
             'validation' => Services::validation(),
             'active' => 'tambah_repo'
         ];
@@ -40,7 +40,7 @@ class Repo extends BaseController
 
     public function edit($slug){
         $data = [
-            'title' => 'Edit Repo | Sipat Lampung',
+            'title' => 'Edit Repo | Ruwai Jurai
             'validation' => Services::validation(),
             'repo' => $this->repoModel->getFile($slug),
             'active' => 'edit_repo'
@@ -203,7 +203,7 @@ class Repo extends BaseController
         $fileUrl = $this->minio->getFileUrl($repo['file']);
 
         $data = [
-            'title' => 'Detail Repository | Sipat Lampung',
+            'title' => 'Detail Repository | Ruwai Jurai
             'active' => 'repo',
             'repo' => $repo,
             'fileUrl' => $fileUrl

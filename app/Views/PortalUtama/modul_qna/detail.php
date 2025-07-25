@@ -974,6 +974,7 @@
                 <?php endif; ?>
               <?php endif; ?>
             <div class="question-content"><?= $pertanyaan['deskripsi']; ?></div>
+            
             <!-- Like Button dan Jumlah Like Pertanyaan-->
             <div class="text-end mt-3">
                 <button onclick="likePertanyaan(<?= $pertanyaan['id_pertanyaan'] ?>)"
@@ -1040,6 +1041,15 @@
                     </div>
                 </div>
             <?php endif; ?>
+            <div class="container d-flex justify-content-end mt-3">
+                <a href="/pertanyaan/edit/<?= $pertanyaan['id_pertanyaan']; ?>" class="btn btn-primary me-1" style="width: 80px">Edit</a>
+                <form name="actionDelete2_Pertanyaan<?= $pertanyaan['id_pertanyaan']; ?>" onclick="destroy2(<?= $pertanyaan['id_pertanyaan']; ?>,'Pertanyaan','<?= $pertanyaan['judul']; ?>')" action="/pertanyaan/<?= $pertanyaan['id_pertanyaan']; ?>" method="post">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="button" class="btn btn-danger" style="width: 80px">
+                        Hapus
+                    </button>
+                </form>
+            </div>
         </div>
 
 
@@ -1511,7 +1521,7 @@
             text: `Anda yakin ingin menghapus ${type.toLowerCase()} "${title}"?`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
+            confirmButtonColor: '#dd3333',
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'Ya, Hapus',
             cancelButtonText: 'Batal'

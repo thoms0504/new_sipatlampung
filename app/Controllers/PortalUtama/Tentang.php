@@ -10,9 +10,9 @@ class Tentang extends BaseController
     public function index()
     {
         $data = [
-            'title' => 'Beranda | Sipat Lampung',
+            'title' => 'Beranda | Ruwai Jurai',
             'active' => 'tentang'
         ];
-        return view('PortalUtama/modul_utama/tentang.php',$data);
+        return view('PortalUtama/modul_utama/tentang.php', $data);
     }
 }

@@ -311,7 +311,7 @@
     <div class="container pt-5">
         <div class="row align-items-center">
             <div class="col-lg-6 d-flex flex-column justify-content-center pt-4 pt-lg-0 order-2 order-lg-1 hero-content fade-in" data-aos="fade-up" data-aos-delay="200">
-                <h1>Aplikasi Layanan Data dan Internal</h1>
+                <h1>Ruang Warga Aspiratif Interaktif – Jaringan untuk Usulan, Rekomendasi, Aspirasi, dan Informasi</h1>
                 <h2>Tersedia untuk Umum dan BPS Provinsi Lampung</h2>
                 <div class="d-flex justify-content-center justify-content-lg-start">
                     <a href="#clients" class="btn-get-started scrollto">

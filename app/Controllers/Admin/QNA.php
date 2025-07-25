@@ -14,7 +14,8 @@ class QNA extends BaseController
     protected $JawabanModel;
     protected $userModel;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->pertanyaaModel = new PertanyaanModel();
         $this->JawabanModel = new JawabanModel();
         $this->userModel = new UserModel();
@@ -32,7 +33,7 @@ class QNA extends BaseController
 
         // Siapkan array untuk data yang akan dikirim ke view
         $data = [
-            'title' => 'Seputar Pertanyaan | Sipat Lampung',
+            'title' => 'Seputar Pertanyaan | Ruwai Jurai',
             'pertanyaan' => [],
             'active' => 'daftarQnA'
         ];
@@ -42,17 +43,18 @@ class QNA extends BaseController
             foreach ($users as $u) {
                 if ($p['id_penanya'] == $u['id']) {
                     // Hitung jumlah like dari tabel jawaban berdasarkan id_pertanyaan
-                    $likes = $jawabanModel->where('id_pertanyaan', $p['id_pertanyaan'])->selectSum('likes')->get()->getRow()->likes;
+                    $likes_jawaban = $jawabanModel->where('id_pertanyaan', $p['id_pertanyaan'])->selectSum('likes')->get()->getRow()->likes;
 
                     // Tambahkan data ke array
                     $data['pertanyaan'][] = [
                         'nama' => $u['nama_lengkap'],
                         'judul' => $p['judul'],
                         'deskripsi' => $p['deskripsi'],
+                        'like_pertanyaan' => $p['likes'],
                         'file_attachment' => $p['file_attachment'] ?? null,
                         'file_type' => $p['file_type'] ?? null,
                         'file_size' => $p['file_size'] ?? null,
-                        'likes' => $likes ?? 0,
+                        'likes_jawaban' => $likes_jawaban ?? 0,
                         'status' => $p['status'],
                         'id_pertanyaan' => $p['id_pertanyaan'],
                         'created_at' => $p['created_at']
@@ -138,7 +140,7 @@ class QNA extends BaseController
     public function downloadFile($fileName)
     {
         $filePath = WRITEPATH . 'uploads/pertanyaan/' . $fileName;
-        
+
         if (!file_exists($filePath)) {
             throw new \CodeIgniter\Exceptions\PageNotFoundException('File tidak ditemukan');
         }
@@ -153,7 +155,7 @@ class QNA extends BaseController
 
         // Ambil data pertanyaan untuk mendapatkan info file
         $pertanyaan = $pertanyaanModel->find($id_pertanyaan);
-        
+
         if (!$pertanyaan) {
             session()->setFlashdata('error', 'Pertanyaan tidak ditemukan.');
             return redirect()->to(base_url('/admin/qna'));
@@ -173,5 +175,4 @@ class QNA extends BaseController
         session()->setFlashdata('sukses', 'Pertanyaan berhasil dihapus.');
         return redirect()->to(base_url('/admin/qna'));
     }
-
 }

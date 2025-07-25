@@ -9,8 +9,9 @@
                 <thead>
                     <tr>
                         <th class="col-3">Judul Pertanyaan</th>
-                        <th class="col-3">Nama</th>
-                        <th class="col-1">Jumlah Like</th>
+                        <th class="col-2">Nama</th>
+                        <th class="col-1">Like Pertanyaan</th>
+                        <th class="col-1">Like Jawaban</th>
                         <th class="col-3">Aksi</th>
                         <th class="col-2">Status</th>
                     </tr>
@@ -21,7 +22,8 @@
                         <tr>
                             <td><?= esc($row['judul']) ?></td>
                             <td><?= esc($row['nama']) ?></td>
-                            <td><?= esc($row['likes']) ?></td>
+                            <td><?= esc($row['like_pertanyaan']) ?></td>
+                            <td><?= esc($row['likes_jawaban']) ?></td>
                             <td class="py-1">
                                 <a href="/pertanyaan/<?= $row['id_pertanyaan']; ?>"><button  class="my-1 btn btn-success" style="width: 100px;"><i class="bi bi-eye-fill"></i> Lihat</button></a>
                                 
@@ -35,7 +37,7 @@
                                 </form>
                             </td>
                             <td>
-                                <?php if ($a['status']==0) { ?>
+                                <?php if ($row['status']==0) { ?>
                                     <a><button class="btn btn-warning disabled">
                                         <i class="bi bi-info-circle"></i> Belum Dijawab</button>
                                     </a>

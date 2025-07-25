@@ -438,7 +438,7 @@
         <div class="login-left">
             <div class="logo-section">
                 <img src="<?= base_url(); ?>/PortalUtama/img/logo_bps.png" class="img-fluid float-start" alt="">
-                <h1>Sipat Lampung</h1>
+                <h1>Ruwai Jurai</h1>
             </div>
 
             <div class="form-title">Selamat Datang Kembali</div>
@@ -464,7 +464,7 @@
                         <input class="form-check-input" type="checkbox" id="rememberMe" name="rememberMe">
                         <label class="form-check-label" for="rememberMe">Ingat Saya</label>
                     </div>
-                    <a href="#" class="forgot-password">Lupa Kata Sandi?</a>
+                    <!-- <a href="#" class="forgot-password">Lupa Kata Sandi?</a> -->
                 </div>
 
                 <button type="submit" class="btn btn-primary" name="submit">
@@ -609,3 +609,5 @@
 </body>
 
 </html>
+
+<?= $this->include('PortalUtama/layout/sweetalert') ?>

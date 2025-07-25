@@ -18,7 +18,7 @@ class Profil extends BaseController
     public function index()
     {
         $data = [
-            'title' => 'Edit Profil | Sipat Lampung',
+            'title' => 'Edit Profil | Ruwai Jurai',
             'active' => 'profil',
             'user' => $this->userModel->where('id', session()->get('id'))->first(),
         ];
@@ -28,7 +28,7 @@ class Profil extends BaseController
     public function edit()
     {
         $data = [
-            'title' => 'Edit Profil | Sipat Lampung',
+            'title' => 'Edit Profil | Ruwai Jurai',
             'active' => 'profil',
             'validation' => Services::validation(),
             'user' => $this->userModel->where('id', session()->get('id'))->first(),
@@ -96,7 +96,7 @@ class Profil extends BaseController
     public function formKataSandi()
     {
         $data = [
-            'title' => 'Ubah Kata Sandi | Sipat Lampung',
+            'title' => 'Ubah Kata Sandi | Ruwai Jurai',
             'active' => 'profil',
             'validation' => Services::validation(),
             'user' => $this->userModel->where('id', session()->get('id'))->first(),

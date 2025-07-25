@@ -232,7 +232,7 @@
                         <img class="float-left me-3" src="<?= base_url(); ?>/PortalUtama/img/logo_bps.png" alt="logo BPS"
                             style="width:70px; float:left">
                         <div>
-                            <h3 class="app-title">Sipat Lampung</h3>
+                            <h3 class="app-title">Ruwai Jurai</h3>
                             <p class="app-subtitle">Aplikasi Penyimpanan dan Konsultasi Tanya Jawab<br>BPS Provinsi Lampung</p>
                         </div>
                     </div>
@@ -266,6 +266,7 @@
                 <div class="col-md-6">
                     <p class="copyright">
                         &copy; Copyright <strong>IPDS BPS Provinsi Lampung</strong>.
+                        <span class="divider">|</span> Made with Klanting
                     </p>
                 </div>
                 <div class="col-md-6">

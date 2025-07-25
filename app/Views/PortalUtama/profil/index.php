@@ -235,10 +235,10 @@
                                 <span class="icon-edit"></span>
                                 Edit Profil
                             </a>
-                            <a href="/profil/changepassword" class="btn btn-modern btn-secondary-modern">
+                            <!-- <a href="/profil/changepassword" class="btn btn-modern btn-secondary-modern">
                                 <span class="icon-lock"></span>
                                 Ubah Kata Sandi
-                            </a>
+                            </a> -->
                         </div>
                     </div>
                 </div>

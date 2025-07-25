@@ -11,19 +11,20 @@ class Pengguna extends BaseController
 {
     protected $userModel;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->userModel = new UserModel;
     }
 
     public function index()
     {
         $data = [
-            'title' => 'Semua Pengguna | Sipat Lampung',
-            'user' => $this->userModel->where('role','user')->findAll(),
+            'title' => 'Semua Pengguna | Ruwai Jurai',
+            'user' => $this->userModel->where('role', 'user')->findAll(),
             'active' => 'semua_pengguna',
             'validation' => Services::validation(),
         ];
-        return view('Admin/ModulUser/index',$data);
+        return view('Admin/ModulUser/index', $data);
     }
 
     // Method untuk menonaktifkan pengguna
@@ -56,11 +57,10 @@ class Pengguna extends BaseController
 
         // Nonaktifkan pengguna
         $result = $this->userModel->deactivateUser($id);
-        
+
         if ($result) {
             session()->setFlashdata('sukses', 'Pengguna berhasil dinonaktifkan');
             return redirect()->to('/admin/user');
-
         } else {
             return $this->response->setJSON([
                 'status' => 'error',
@@ -91,7 +91,7 @@ class Pengguna extends BaseController
 
         // Aktifkan pengguna
         $result = $this->userModel->activateUser($id);
-        
+
         if ($result) {
             session()->setFlashdata('sukses', 'Pengguna berhasil diaktifkan');
             return redirect()->to('/admin/user');
@@ -134,7 +134,7 @@ class Pengguna extends BaseController
         // Toggle status
         $newStatus = $user['is_active'] == 1 ? 0 : 1;
         $result = $this->userModel->update($id, ['is_active' => $newStatus]);
-        
+
         if ($result) {
             $statusText = $newStatus == 1 ? 'diaktifkan' : 'dinonaktifkan';
             return $this->response->setJSON([
@@ -180,7 +180,7 @@ class Pengguna extends BaseController
 
         // Hapus pengguna
         $result = $this->userModel->delete($id);
-        
+
         if ($result) {
             return $this->response->setJSON([
                 'status' => 'success',

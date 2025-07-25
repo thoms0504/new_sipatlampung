@@ -52,7 +52,7 @@
 
   <!-- Sweetalert -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.css" rel="stylesheet">
+  
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 
   <!-- PARSLEY JS -->
@@ -93,7 +93,6 @@
 
   <!--Star Footer -->
   <?= $this->include('PortalUtama/layout/footer'); ?>
-  <?= $this->include('PortalUtama/layout/sweetalert'); ?>
 
 
   <!-- JS Swiper CDN -->

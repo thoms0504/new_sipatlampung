@@ -1,6 +1,13 @@
 <?= $this->extend("PortalUtama/layout/template"); ?>
 <?= $this->section('content'); ?>
 
+<?php
+// Tambahkan di bagian atas file view edit.php
+function br2nl($string)
+{
+    return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $string);
+}
+?>
 
 <style>
     :root {
@@ -467,7 +474,6 @@
         color: #6b7280;
         font-style: italic;
     }
-
     .back-button {
             position: absolute;
             top: 30px;
@@ -523,6 +529,7 @@
                 height: 45px;
             }
 
+
         .form-container {
             padding: 1.5rem;
             margin-top: -20px;
@@ -536,7 +543,6 @@
 
 
 <div class="bg-section-title"></div>
-
 <section>
     <div class="floating-elements">
         <div class="floating-circle"></div>
@@ -544,15 +550,15 @@
         <div class="floating-circle"></div>
     </div>
 
-    <button class="back-button" onclick="window.location.href='/pertanyaan'">
+    <button class="back-button" onclick="window.location.href='/pertanyaan/<?= $pertanyaan['id_pertanyaan']; ?>'">
         <i class="bi bi-arrow-left"></i>
     </button>
 
     <div class="hero-section">
         <div class="container">
             <div class="hero-content">
-                <h1 class="hero-title">Ajukan Pertanyaan</h1>
-                <p class="hero-subtitle">Sampaikan pertanyaan Anda kepada BPS Provinsi Lampung</p>
+                <h1 class="hero-title">Edit Pertanyaan</h1>
+                <p class="hero-subtitle">Sampaikan Pembaruan Pertanyaan Anda kepada BPS Provinsi Lampung</p>
             </div>
         </div>
     </div>
@@ -562,7 +568,7 @@
                 <div class="form-container">
                     <div class="form-header">
                         <h3><i class="fas fa-question-circle"></i> Form Pertanyaan</h3>
-                        <p>Isi form di bawah ini untuk mengajukan pertanyaan Anda</p>
+                        <p>Isi form di bawah ini untuk mengajukan pembaruan pertanyaan Anda</p>
                     </div>
 
                     <!-- Success Alert -->
@@ -579,7 +585,8 @@
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
 
-                    <form action="/pertanyaan/save" method="POST" enctype="multipart/form-data" id="pertanyaan-form">
+                    <form action="/pertanyaan/update/<?= $pertanyaan["id_pertanyaan"]; ?>" method="POST" enctype="multipart/form-data" id="pertanyaan-form">
+                        <input type="hidden" name="id_pertanyaan" value="<?= $pertanyaan['id_pertanyaan']; ?>">
                         <?= csrf_field() ?>
 
                         <div class="mb-3">
@@ -588,7 +595,7 @@
                                 class="form-control <?= (isset($validation) && $validation->hasError('judul')) ? 'is-invalid' : ''; ?>"
                                 id="judul"
                                 name="judul"
-                                value="<?= old('judul'); ?>"
+                                value="<?= old('judul', $pertanyaan['judul']); ?>"
                                 placeholder="Masukkan judul pertanyaan (minimal 10 karakter)"
                                 required>
                             <?php if (isset($validation) && $validation->hasError('judul')): ?>
@@ -605,17 +612,17 @@
                                 id="deskripsi"
                                 name="deskripsi"
                                 rows="6"
-                                placeholder="Jelaskan pertanyaan Anda secara detail (minimal 10 karakter)"
-                                required><?= old('deskripsi'); ?></textarea>
+                                placeholder="Jelaskan pertanyaan Anda secara detail (minimal 20 karakter)"
+                                required><?= old('deskripsi', strip_tags(br2nl($pertanyaan['deskripsi']))); ?></textarea>
                             <?php if (isset($validation) && $validation->hasError('deskripsi')): ?>
                                 <div class="invalid-feedback">
                                     <?= $validation->getError('deskripsi'); ?>
                                 </div>
                             <?php endif; ?>
-                            <div class="form-text">Minimal 10 karakter</div>
+                            <div class="form-text">Minimal 20 karakter</div>
                         </div>
 
-                        <!-- Tambahkan ini ke dalam form section -->
+                        <!-- Hashtag Section -->
                         <div class="mb-3">
                             <label class="form-label">
                                 <i class="fas fa-hashtag"></i>
@@ -637,7 +644,19 @@
                                     <div class="autocomplete-list" id="autocomplete-list"></div>
                                 </div>
                             </div>
-                            <input type="hidden" name="hashtags" id="hashtags-hidden">
+
+                            <?php
+                            // Prepare existing hashtags
+                            $existingHashtags = '';
+                            if (!empty($pertanyaan['hashtags'])) {
+                                $hashtagsArray = json_decode($pertanyaan['hashtags'], true);
+                                if (is_array($hashtagsArray)) {
+                                    $existingHashtags = implode(',', $hashtagsArray);
+                                }
+                            }
+                            ?>
+                            <input type="hidden" name="hashtags" id="hashtags-hidden" value="<?= old('hashtags', $existingHashtags); ?>">
+
                             <div class="form-text">
                                 Tambahkan hashtag untuk mengkategorikan pertanyaan Anda. Tekan Enter atau koma untuk menambahkan tag.
                             </div>
@@ -657,6 +676,16 @@
                         <!-- File Upload Section -->
                         <div class="mb-3">
                             <label for="file_attachment" class="form-label">Lampiran File <span class="text-muted">(Opsional)</span></label>
+
+                            <!-- Show current file if exists -->
+                            <?php if (!empty($pertanyaan['file_attachment'])): ?>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-file me-2"></i>
+                                    File saat ini: <strong><?= $pertanyaan['file_attachment']; ?></strong>
+                                    <small class="text-muted">(Upload file baru untuk mengganti)</small>
+                                </div>
+                            <?php endif; ?>
+
                             <input type="file"
                                 class="form-control <?= (isset($validation) && $validation->hasError('file_attachment')) ? 'is-invalid' : ''; ?>"
                                 id="file_attachment"
@@ -701,12 +730,12 @@
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
-                            <a href="/pertanyaan" class="btn btn-outline-primary">
+                            <a href="/pertanyaan/<?= $pertanyaan['id_pertanyaan']; ?>" class="btn btn-outline-primary">
                                 <i class="fas fa-arrow-left me-2"></i>Kembali
                             </a>
                             <button type="reset" class="btn btn-outline-secondary">Reset</button>
                             <button type="submit" class="btn btn-primary" id="submit-btn">
-                                <i class="fas fa-paper-plane me-1"></i> Kirim Pertanyaan
+                                <i class="fas fa-save me-1"></i> Simpan Perubahan
                             </button>
                         </div>
                     </form>
@@ -792,8 +821,8 @@
                 return false;
             }
 
-            if (deskripsi.length < 10) {
-                alert('Deskripsi pertanyaan minimal 10 karakter!');
+            if (deskripsi.length < 20) {
+                alert('Deskripsi pertanyaan minimal 20 karakter!');
                 e.preventDefault();
                 return false;
             }
@@ -855,7 +884,7 @@
     const autocompleteDropdown = document.getElementById('hashtag-autocomplete');
     const autocompleteList = document.getElementById('autocomplete-list');
     const suggestions = document.querySelectorAll('.hashtag-suggestion');
-    
+
     let tags = [];
     let selectedIndex = -1;
     let autocompleteData = [];
@@ -870,7 +899,7 @@
     hashtagInput.addEventListener('input', function(e) {
         clearTimeout(debounceTimer);
         const query = e.target.value.trim();
-        
+
         if (query.length >= 1) {
             debounceTimer = setTimeout(() => {
                 fetchHashtagSuggestions(query);
@@ -883,7 +912,7 @@
     // Handle keyboard navigation
     hashtagInput.addEventListener('keydown', function(e) {
         const items = autocompleteList.querySelectorAll('.autocomplete-item');
-        
+
         if (e.key === 'Enter' || e.key === ',') {
             e.preventDefault();
             if (selectedIndex >= 0 && items[selectedIndex]) {
@@ -928,20 +957,20 @@
     function fetchHashtagSuggestions(query) {
         // Fetch hashtag suggestions from server
         fetch(`/pertanyaan/search-hashtags?q=${encodeURIComponent(query)}`, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            autocompleteData = data;
-            showAutocomplete(data, query);
-        })
-        .catch(error => {
-            console.error('Error fetching hashtags:', error);
-            hideAutocomplete();
-        });
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                autocompleteData = data;
+                showAutocomplete(data, query);
+            })
+            .catch(error => {
+                console.error('Error fetching hashtags:', error);
+                hideAutocomplete();
+            });
     }
 
     function showAutocomplete(data, query) {
@@ -1035,6 +1064,24 @@
     window.removeHashtag = function(index) {
         removeTag(index);
     };
+
+    // Initialize hashtags on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const existingHashtags = document.getElementById('hashtags-hidden').value;
+        if (existingHashtags) {
+            const hashtags = existingHashtags.split(',');
+            hashtags.forEach(tag => {
+                if (tag.trim()) {
+                    addHashtag(tag.trim());
+                }
+            });
+        }
+    });
+
+    // Helper function to convert br tags back to newlines
+    function br2nl(str) {
+        return str.replace(/<br\s*\/?>/gi, '\n');
+    }
 
     // File upload functionality (existing code)
     const fileInput = document.getElementById('file_attachment');

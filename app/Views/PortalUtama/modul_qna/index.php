@@ -327,7 +327,7 @@
   <div class="container">
     <div class="row">
       <div class="col-lg-8 hero-content">
-        <h1 class="hero-title"><?= str_replace(" | Sipat Lampung", "", $title) ?></h1>
+        <h1 class="hero-title"><?= str_replace(" | Ruwai Jurai", "", $title) ?></h1>
         <p class="hero-subtitle">Temukan jawaban untuk pertanyaan Anda atau bagikan pengetahuan dengan komunitas</p>
       </div>
     </div>

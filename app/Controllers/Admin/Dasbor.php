@@ -27,12 +27,12 @@ class Dasbor extends BaseController
         $deskripsiPertanyaan = $this->pertanyaanModel->getAllDeskripsi();
 
         $allTextJP = '';
-        foreach ($judulPertanyaan as $item){
+        foreach ($judulPertanyaan as $item) {
             $allTextJP .= ' ' . $item['judul'];
         }
 
         $allText = '';
-        foreach ($deskripsiPertanyaan as $item){
+        foreach ($deskripsiPertanyaan as $item) {
             $allText .= ' ' . $item['deskripsi'];
         }
 
@@ -59,7 +59,7 @@ class Dasbor extends BaseController
         $jumlahPertanyaanAOT = $this->pertanyaanModel->getJumlahPertanyaanAOT();
 
         $data = [
-            'title' => 'Dashboard | Sipat Lampung',
+            'title' => 'Dashboard | Ruwai Jurai',
             'active' => 'dasbor',
             // Data dari JawabanModel
             'judul_pertanyaan' => $judulPertanyaan,
@@ -93,90 +93,99 @@ class Dasbor extends BaseController
     {
         // Aktivasi debugging
         $debug = true;
-        
+
         // Log file path
         $logFile = WRITEPATH . 'logs/ajax_debug.log';
-        
+
         // Helper function untuk log
-        $logDebug = function($message) use ($logFile, $debug) {
+        $logDebug = function ($message) use ($logFile, $debug) {
             if ($debug) {
                 $time = date('Y-m-d H:i:s');
                 file_put_contents($logFile, "[$time] $message" . PHP_EOL, FILE_APPEND);
             }
         };
-        
+
         $logDebug("=== AJAX Request Received ===");
         $logDebug("Request Method: " . $this->request->getMethod());
         $logDebug("Is AJAX: " . ($this->request->isAJAX() ? 'Yes' : 'No'));
-        
+
         // Dump semua POST data untuk debugging
         $postData = $this->request->getPost();
         $logDebug("POST Data: " . json_encode($postData));
-        
+
         // Coba ambil dari beberapa sumber
         $tahun = $this->request->getPost('tahun');
         if (empty($tahun)) {
             $tahun = $this->request->getVar('tahun');
         }
-        
+
         // Jika masih kosong, coba dari body
         if (empty($tahun)) {
             $jsonInput = $this->request->getJSON(true);
             $logDebug("JSON Input: " . json_encode($jsonInput));
             $tahun = $jsonInput['tahun'] ?? null;
         }
-        
+
         $logDebug("Tahun yang diterima: " . ($tahun ?? 'NULL'));
-        
+
         // Jika tahun kosong, gunakan tahun saat ini
         if (empty($tahun)) {
             $tahun = date('Y');
             $logDebug("Menggunakan tahun default: $tahun");
         }
-        
+
         // Ambil data tren pertanyaan per bulan
         try {
             $logDebug("Memanggil model dengan tahun: $tahun");
             $data = $this->pertanyaanModel->getTrenPertanyaanPerBulan($tahun);
             $logDebug("Data hasil query: " . json_encode($data));
-            
+
             // Pastikan struktur data sesuai harapan untuk chart
             if (!isset($data['labels']) || !isset($data['data'])) {
                 $logDebug("Format data tidak sesuai, normalisasi data");
-                
-                $labels = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
-                          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+                $labels = [
+                    'Januari',
+                    'Februari',
+                    'Maret',
+                    'April',
+                    'Mei',
+                    'Juni',
+                    'Juli',
+                    'Agustus',
+                    'September',
+                    'Oktober',
+                    'November',
+                    'Desember'
+                ];
                 $chartData = array_fill(0, 12, 0);
-                
+
                 // Jika data adalah array numerik sederhana, konversi ke format yang dibutuhkan
                 if (is_array($data)) {
                     foreach ($data as $item) {
                         if (isset($item['bulan']) && isset($item['jumlah'])) {
-                            $bulanIndex = (int)$item['bulan'] - 1; 
+                            $bulanIndex = (int)$item['bulan'] - 1;
                             $chartData[$bulanIndex] = (int)$item['jumlah'];
                             $logDebug("Set bulan $bulanIndex = " . $item['jumlah']);
                         }
                     }
                 }
-                
+
                 $data = [
                     'labels' => $labels,
                     'data' => $chartData
                 ];
             }
-            
+
             $logDebug("Final data untuk response: " . json_encode($data));
             return $this->response->setJSON($data);
-            
         } catch (\Exception $e) {
             $logDebug("ERROR: " . $e->getMessage());
             return $this->response->setStatusCode(500)
-                                ->setJSON([
-                                    'error' => $e->getMessage(),
-                                    'trace' => $e->getTraceAsString()
-                                ]);
+                ->setJSON([
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
         }
     }
-
-    
 }

@@ -2,7 +2,7 @@
     <div class="d-flex align-items-center justify-content-between">
         <a href="/" class="logo d-flex align-items-center">
             <img src="<?= base_url(); ?>/admin/img/logo.png" alt="" style="height: 2.5rem;">
-            <span class="d-none d-lg-block" style="font-weight: bolder; padding-left: 0.5rem;">Sipat Lampung</span>
+            <span class="d-none d-lg-block" style="font-weight: bolder; padding-left: 0.5rem;">Ruwai Jurai</span>
         </a>
 
         <div style="padding-left: 0.5rem;">
@@ -44,8 +44,8 @@
         <ul class="d-flex align-items-center" style="height: 0.5rem; list-style-type: none;">
             <li class="nav-item dropdown pe-3" style="height: 0.5rem;">
                 <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-                <img src="/admin/img/users/default.png" alt="Foto Profil" class="rounded-circle" style="height: 25px;">
-                <span class="d-none d-md-block dropdown-toggle ps-2"><?= isset((session()->get())['nama_lengkap']) ? session()->get()['nama_lengkap'] : ""; ?></span>
+                    <img src="/admin/img/users/default.png" alt="Foto Profil" class="rounded-circle" style="height: 25px;">
+                    <span class="d-none d-md-block dropdown-toggle ps-2"><?= isset((session()->get())['nama_lengkap']) ? session()->get()['nama_lengkap'] : ""; ?></span>
                 </a><!-- End Profile Image Icon -->
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
 

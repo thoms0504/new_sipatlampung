@@ -10,10 +10,9 @@ class Beranda extends BaseController
     public function index()
     {
         $data = [
-            'title' => 'Beranda | Sipat Lampung',
+            'title' => 'Beranda | Ruwai Jurai',
             'active' => 'beranda'
         ];
-        return view('PortalUtama/modul_utama/index.php',$data);
-    
+        return view('PortalUtama/modul_utama/index.php', $data);
     }
 }
