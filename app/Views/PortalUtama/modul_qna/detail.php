@@ -1,843 +1,63 @@
 <?= $this->extend('PortalUtama/layout/template'); ?>
 <?= $this->section('content'); ?>
 
-<style>
-    .auto-resize {
-        min-height: 100px;
-        resize: vertical;
-    }
-
-    .card {
-        border: none;
-    }
-
-    .btn-group .btn {
-        border-radius: 4px;
-        margin: 0 2px;
-    }
-
-    .dropdown-item.active {
-        background-color: #0d6efd;
-        color: white;
-    }
-
-    /* File Attachment Styles */
-    .file-attachment {
-        border: 1px solid #e0e0e0;
-        transition: all 0.2s ease;
-    }
-
-    .file-attachment:hover {
-        border-color: #0d6efd;
-        box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
-    }
-
-    .file-attachment-small {
-        border: 1px solid #e0e0e0;
-        font-size: 0.8rem;
-    }
-
-    .preview-image,
-    .preview-image-small {
-        transition: transform 0.2s ease;
-    }
-
-    .preview-image:hover,
-    .preview-image-small:hover {
-        transform: scale(1.05);
-    }
-
-    /* File Upload Area */
-    .file-upload-area {
-        cursor: pointer;
-        transition: all 0.2s ease;
-        min-height: 120px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-color: #dee2e6 !important;
-    }
-
-    .file-upload-area:hover {
-        border-color: #0d6efd !important;
-        background-color: #f8f9fa;
-    }
-
-    .file-upload-area.border-primary {
-        border-color: #0d6efd !important;
-    }
-
-    /* File Preview Items */
-    .file-preview-item {
-        border: 1px solid #e0e0e0;
-        height: 120px;
-    }
-
-    .file-preview-item .card-body {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        height: 100%;
-    }
-
-    /* Scroll Container untuk Daftar Jawaban */
-    .answers-container {
-        max-height: 600px;
-        /* Bisa disesuaikan sesuai kebutuhan */
-        overflow-y: auto;
-        border-radius: 0 0 1rem 1rem;
-        position: relative;
-    }
-
-    /* Custom Scrollbar untuk container jawaban */
-    .answers-container::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .answers-container::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-    }
-
-    .answers-container::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 10px;
-        transition: background 0.3s ease;
-    }
-
-    .answers-container::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
-    }
-
-    /* Untuk Firefox */
-    .answers-container {
-        scrollbar-width: thin;
-        scrollbar-color: #c1c1c1 #f1f1f1;
-    }
-
-    /* Fade effect untuk menunjukkan ada lebih banyak konten */
-    .answers-container::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 20px;
-        background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .answers-container:not(:hover)::after {
-        opacity: 1;
-    }
-
-    /* Responsive untuk mobile */
-    @media (max-width: 768px) {
-        .answers-container {
-            max-height: 400px;
-            /* Lebih kecil untuk mobile */
-        }
-
-        .answers-container::-webkit-scrollbar {
-            width: 6px;
-        }
-    }
-
-    /* Smooth scrolling behavior */
-    .answers-container {
-        scroll-behavior: smooth;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-
-        .file-attachment,
-        .file-attachment-small {
-            margin-bottom: 1rem;
-        }
-
-        .btn-group {
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .btn-group .btn {
-            margin: 0;
-        }
-    }
-
-    /* Loading state for like button */
-    .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-</style>
 
 <style>
     :root {
-        --primary-color: #667eea;
-        --primary-dark: #5a6fd8;
-        --secondary-color: #764ba2;
-        --accent-color: #f093fb;
-        --light-bg: #f8fafc;
-        --white: #ffffff;
-        --text-primary: #2d3748;
-        --text-secondary: #718096;
-        --border-color: #e2e8f0;
-        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
-        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        --hashtag-gradient: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        --card-hover-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        --border-radius: 20px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    
+    * {
+        transition: var(--transition);
+    }
 
-    /* Header Section */
-    .header-section {
-        background: var(--white);
-        border-radius: 20px;
-        margin-top: 1rem;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-lg);
+    body {
+        background: linear-gradient(360deg, #667eea 10%, #001f4f 90%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .bg-section-title {
+
         position: relative;
         overflow: hidden;
     }
 
-    .header-section::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+
+
+    @keyframes float {
+        0% {
+            transform: translateX(0) translateY(0);
+        }
+
+        100% {
+            transform: translateX(-50px) translateY(-50px);
+        }
     }
 
-    .breadcrumb-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .back-btn {
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-        color: var(--white);
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 12px;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow-sm);
-    }
-
-    .back-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-        color: var(--white);
-    }
-
-    .breadcrumb {
-        background: var(--light-bg);
-        padding: 0.75rem 1.25rem;
-        border-radius: 12px;
-        margin: 0;
-        border: 1px solid var(--border-color);
-    }
-
-    .breadcrumb-item+.breadcrumb-item::before {
-        content: "→";
-        color: var(--primary-color);
-        font-weight: bold;
-    }
-
-    .breadcrumb-item a {
-        color: var(--primary-color);
-        text-decoration: none;
-        font-weight: 500;
-    }
-
-    .breadcrumb-item.active {
-        color: var(--text-secondary);
-    }
-
-    .page-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-align: center;
-        margin-bottom: 0.5rem;
-    }
-
-    /* Question Card */
-    .question-card {
-        background: var(--white);
-        border-radius: 20px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-color);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .question-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-    }
-
-    .user-info {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .user-avatar {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid var(--primary-color);
-        box-shadow: var(--shadow-sm);
-    }
-
-    .user-details h6 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.25rem;
-    }
-
-    .user-details small {
-        color: var(--text-secondary);
-        font-size: 0.875rem;
-    }
-
-    .question-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 1rem;
-        line-height: 1.3;
-    }
-
-    .question-content {
-        font-size: 1.1rem;
-        color: var(--text-secondary);
-        line-height: 1.7;
-        margin-bottom: 1.5rem;
-    }
-
-    /* File Attachment */
-    .file-attachment-section {
-        background: var(--light-bg);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-        border: 1px solid var(--border-color);
-    }
-
-    .file-attachment-title {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 1rem;
-    }
-
-    .file-card {
-        background: var(--white);
-        border-radius: 12px;
-        padding: 1.5rem;
-        border: 1px solid var(--border-color);
-        transition: all 0.3s ease;
-        text-align: center;
-    }
-
-    .file-card:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-        border-color: var(--primary-color);
-    }
-
-    .file-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-    }
-
-    .file-actions {
-        display: flex;
-        gap: 0.5rem;
+    .container {
         margin-top: 1rem;
     }
 
-    .file-actions .btn {
-        flex: 1;
-        padding: 0.5rem;
-        border-radius: 8px;
-        border: 1px solid var(--border-color);
-        background: var(--white);
-        color: var(--text-primary);
-        transition: all 0.3s ease;
-    }
-
-    .file-actions .btn:hover {
-        background: var(--primary-color);
-        color: var(--white);
-        border-color: var(--primary-color);
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-end;
-        margin-top: 1.5rem;
-    }
-
-    .btn-primary-custom {
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-        color: var(--white);
+    /* Alert Animations */
+    .alert {
         border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 12px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow-sm);
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        animation: slideInDown 0.5s ease-out;
     }
 
-    .btn-primary-custom:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-    }
-
-    .btn-danger-custom {
-        background: linear-gradient(135deg, #e53e3e, #c53030);
-        color: var(--white);
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 12px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow-sm);
-    }
-
-    .btn-danger-custom:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-    }
-
-    /* Answers Section */
-    .answers-section {
-        background: var(--white);
-        border-radius: 20px;
-        box-shadow: var(--shadow-lg);
-        overflow: hidden;
-        margin-bottom: 2rem;
-    }
-
-    .answers-header {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: var(--white);
-        padding: 1.5rem 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .answers-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin: 0;
-    }
-
-    .answers-count {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        font-weight: 500;
-    }
-
-    .sort-dropdown {
-        position: relative;
-    }
-
-    .sort-btn {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: var(--white);
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .sort-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    .answers-container {
-        max-height: 600px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--primary-color) var(--light-bg);
-    }
-
-    .answers-container::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .answers-container::-webkit-scrollbar-track {
-        background: var(--light-bg);
-    }
-
-    .answers-container::-webkit-scrollbar-thumb {
-        background: var(--primary-color);
-        border-radius: 4px;
-    }
-
-    .answer-item {
-        padding: 2rem;
-        border-bottom: 1px solid var(--border-color);
-        transition: all 0.3s ease;
-    }
-
-    .answer-item:hover {
-        background: var(--light-bg);
-    }
-
-    .answer-item:last-child {
-        border-bottom: none;
-    }
-
-    .answer-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-
-    .answer-user {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .answer-avatar {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid var(--primary-color);
-    }
-
-    .answer-user-info h6 {
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.25rem;
-    }
-
-    .answer-user-info small {
-        color: var(--text-secondary);
-    }
-
-    .answer-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .answer-actions .btn {
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-size: 0.875rem;
-        border: 1px solid var(--border-color);
-        background: var(--white);
-        color: var(--text-primary);
-        transition: all 0.3s ease;
-    }
-
-    .answer-actions .btn:hover {
-        background: var(--primary-color);
-        color: var(--white);
-        border-color: var(--primary-color);
-    }
-
-    .answer-content {
-        font-size: 1.1rem;
-        color: var(--text-secondary);
-        line-height: 1.7;
-        margin-bottom: 1.5rem;
-    }
-
-    .like-section {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        margin-top: 1rem;
-    }
-
-    .like-btn {
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-        color: var(--white);
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 25px;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow-sm);
-    }
-
-    .like-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-    }
-
-    .like-btn.liked {
-        background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
-    }
-
-    /* Empty State */
-    .empty-answers {
-        text-align: center;
-        padding: 4rem 2rem;
-        color: var(--text-secondary);
-    }
-
-    .empty-answers i {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-        color: var(--primary-color);
-        opacity: 0.5;
-    }
-
-    .empty-answers h5 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
-    /* Answer Form */
-    .answer-form {
-        background: var(--white);
-        border-radius: 20px;
-        padding: 2rem;
-        box-shadow: var(--shadow-lg);
-        margin-bottom: 2rem;
-    }
-
-    .form-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .form-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .preview-btn {
-        background: var(--light-bg);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .preview-btn:hover {
-        background: var(--primary-color);
-        color: var(--white);
-        border-color: var(--primary-color);
-    }
-
-    .form-control {
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 1rem;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        resize: vertical;
-        min-height: 120px;
-    }
-
-    .form-control:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        outline: none;
-    }
-
-    .file-upload-area {
-        background: var(--light-bg);
-        border: 2px dashed var(--border-color);
-        border-radius: 16px;
-        padding: 2rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        margin-top: 1.5rem;
-    }
-
-    .file-upload-area:hover {
-        border-color: var(--primary-color);
-        background: rgba(102, 126, 234, 0.05);
-    }
-
-    .file-upload-icon {
-        font-size: 3rem;
-        color: var(--primary-color);
-        margin-bottom: 1rem;
-    }
-
-    .submit-btn {
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-        color: var(--white);
-        border: none;
-        padding: 1rem 2rem;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 1.1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow-sm);
-        margin-top: 1.5rem;
-    }
-
-    .submit-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-    }
-
-    /* Login Prompt */
-    .login-prompt {
-        background: var(--white);
-        border-radius: 20px;
-        padding: 3rem;
-        text-align: center;
-        box-shadow: var(--shadow-lg);
-        margin-bottom: 2rem;
-    }
-
-    .login-prompt h5 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 1rem;
-    }
-
-    .login-prompt p {
-        color: var(--text-secondary);
-        font-size: 1.1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .login-btn {
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-        color: var(--white);
-        border: none;
-        padding: 1rem 2rem;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 1.1rem;
-        text-decoration: none;
-        display: inline-block;
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow-sm);
-    }
-
-    .login-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-        color: var(--white);
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .container {
-            padding: 1rem;
-        }
-
-        .header-section,
-        .question-card,
-        .answers-section,
-        .answer-form,
-        .login-prompt {
-            padding: 1.5rem;
-            border-radius: 16px;
-        }
-
-        .page-title {
-            font-size: 2rem;
-        }
-
-        .question-title {
-            font-size: 1.5rem;
-        }
-
-        .breadcrumb-nav {
-            flex-direction: column;
-            gap: 1rem;
-            align-items: stretch;
-        }
-
-        .answers-header {
-            flex-direction: column;
-            gap: 1rem;
-            align-items: stretch;
-        }
-
-        .answer-header {
-            flex-direction: column;
-            gap: 1rem;
-            align-items: stretch;
-        }
-
-        .form-header {
-            flex-direction: column;
-            gap: 1rem;
-            align-items: stretch;
-        }
-
-        .action-buttons {
-            flex-direction: column;
-        }
-
-        .answer-actions {
-            flex-direction: column;
-        }
-    }
-
-    /* Animations */
-    @keyframes fadeInUp {
+    @keyframes slideInDown {
         from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(-30px);
         }
 
         to {
@@ -846,66 +66,527 @@
         }
     }
 
-    .question-card,
-    .answers-section,
-    .answer-form,
-    .login-prompt {
-        animation: fadeInUp 0.6s ease-out;
+    .alert-success {
+        background: var(--warning-gradient);
+        color: white;
+        border-left: 5px solid #00f2fe;
     }
 
-    .answer-item {
-        animation: fadeInUp 0.4s ease-out;
+    .alert-danger {
+        background: var(--secondary-gradient);
+        color: white;
+        border-left: 5px solid #f5576c;
     }
 
-    /* Hover Effects */
-    .question-card:hover,
-    .answer-form:hover {
+    /* Header Section */
+    .header-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--primary-gradient);
+        color: white;
+        text-decoration: none;
+        border-radius: 50px;
+        font-weight: 500;
+        transition: var(--transition);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .back-btn:hover {
+        color: white;
         transform: translateY(-2px);
-        box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
     }
 
-    /* Focus States */
-    .btn:focus,
-    .form-control:focus {
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        outline: none;
+    .breadcrumb {
+        background: none;
+        padding: 0;
+        margin: 1rem 0 0 0;
     }
 
-    /* Loading States */
-    .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .breadcrumb-item.active {
+        color: #764ba2;
+        font-weight: 600;
+    }
+
+    .page-title {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800;
+        font-size: 2.5rem;
+        margin: 1rem 0 0 0;
+        text-align: center;
+    }
+
+    /* Question Card */
+    .question-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: var(--transition);
+    }
+
+    .question-card:hover {
+        box-shadow: var(--card-hover-shadow);
+        transform: translateY(-5px);
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 15px;
+        border-left: 4px solid #667eea;
+    }
+
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #667eea;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .user-details h6 {
+        margin: 0;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .user-details small {
+        color: #666;
+        font-weight: 500;
+    }
+
+    .question-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 1rem;
+        line-height: 1.4;
     }
 
     .question-hashtags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-    margin-bottom: 0.5rem;
-  }
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
 
-  .question-hashtag {
-    background: linear-gradient(135deg, #3b82f6, #1e40af);
-    color: white;
-    padding: 0.3rem 0.8rem;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.3s ease;
-  }
+    .question-hashtag {
+        padding: 0.25rem 0.75rem;
+        background: var(--hashtag-gradient);
+        color: white;
+        text-decoration: none;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
 
-  .question-hashtag:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-    color: white;
-  }
+    .question-hashtag:hover {
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .question-content {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: #444;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Enhanced Buttons */
+    .btn {
+        border-radius: 50px;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        transition: var(--transition);
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transition: var(--transition);
+        transform: translate(-50%, -50%);
+    }
+
+    .btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    }
+
+    .btn-outline-primary {
+        border: 2px solid #667eea;
+        color: #667eea;
+        background: transparent;
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--primary-gradient);
+        border-color: transparent;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-danger {
+        background: var(--secondary-gradient);
+        box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 87, 108, 0.6);
+    }
+
+    .btn-success {
+        background: var(--success-gradient);
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.6);
+    }
+
+    /* File Attachment */
+    .file-attachment {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: var(--transition);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .file-attachment:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .preview-image {
+        border-radius: 10px;
+        transition: var(--transition);
+    }
+
+    .preview-image:hover {
+        transform: scale(1.05);
+    }
+
+    /* Answers Section */
+    .card {
+        border: none;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        transition: var(--transition);
+    }
+
+    .card:hover {
+        box-shadow: var(--card-hover-shadow);
+    }
+
+    .card-header {
+        border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+        padding: 1.5rem;
+    }
+
+    .badge {
+        background: var(--primary-gradient);
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .dropdown-toggle {
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .dropdown-toggle:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    }
+
+    .dropdown-menu {
+        border: none;
+        border-radius: 15px;
+        box-shadow: var(--card-shadow);
+        backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .dropdown-item {
+        border-radius: 10px;
+        margin: 0.25rem;
+        transition: var(--transition);
+    }
+
+    .dropdown-item:hover {
+        background: var(--primary-gradient);
+        color: white;
+        transform: translateX(5px);
+    }
+
+    .dropdown-item.active {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    /* Answers Container */
+    .answers-container {
+        max-height: 800px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #667eea rgba(102, 126, 234, 0.2);
+    }
+
+    .answers-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .answers-container::-webkit-scrollbar-track {
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 10px;
+    }
+
+    .answers-container::-webkit-scrollbar-thumb {
+        background: var(--primary-gradient);
+        border-radius: 10px;
+    }
+
+    .answers-container::-webkit-scrollbar-thumb:hover {
+        background: #764ba2;
+    }
+
+    .border-bottom {
+        border-bottom: 1px solid rgba(102, 126, 234, 0.1) !important;
+        transition: var(--transition);
+    }
+
+    .border-bottom:hover {
+        background: rgba(102, 126, 234, 0.02);
+        transform: translateX(5px);
+    }
+
+    /* Form Styling */
+    .form-control {
+        border: 2px solid rgba(102, 126, 234, 0.2);
+        border-radius: 15px;
+        padding: 1rem;
+        transition: var(--transition);
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        transform: translateY(-2px);
+    }
+
+    /* File Upload Area */
+    .file-upload-area {
+        border-radius: 15px;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .file-upload-area:hover {
+        border-color: #667eea !important;
+        background: rgba(102, 126, 234, 0.05);
+        transform: translateY(-2px);
+    }
+
+    .file-preview-item {
+        border: none;
+        border-radius: 15px;
+        transition: var(--transition);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .file-preview-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Modal Styling */
+    .modal-content {
+        border: none;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .container {
+            margin-top: -50px;
+            padding: 1rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+        }
+
+        .question-card,
+        .header-section {
+            padding: 1.5rem;
+        }
+
+        .user-info {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .question-hashtags {
+            justify-content: center;
+        }
+    }
+
+    /* Loading Animation */
+    .loading {
+        position: relative;
+        pointer-events: none;
+    }
+
+    .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        transform: translate(-50%, -50%);
+    }
+
+    @keyframes spin {
+        0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+
+        100% {
+            transform: translate(-50%, -50%) rotate(360deg);
+        }
+    }
+
+    /* Hover Effects for Interactive Elements */
+    .user-avatar:hover {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .question-card .btn:hover {
+        transform: translateY(-3px) scale(1.05);
+    }
+
+    /* Enhanced Typography */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+
+    p {
+        line-height: 1.6;
+        color: #555;
+    }
+
+    /* Glassmorphism Effects */
+    .glass {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    /* Micro-interactions */
+    .clickable {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .clickable:active {
+        transform: scale(0.98);
+    }
 </style>
 
-
 <div class="bg-section-title"></div>
+<form id="csrf-form" style="display: none;">
+    <?= csrf_field() ?>
+</form>
 <div class="container">
     <!-- Flash Messages -->
     <?php if (session()->getFlashdata("pesan")) : ?>
@@ -925,25 +606,25 @@
     <?php endif; ?>
 
     <!-- Header Section -->
-        <div class="header-section">
-            <div class="breadcrumb-nav">
-                <a href="<?= base_url('pertanyaan') ?>" class="back-btn">
-                    <i class="fas fa-arrow-left"></i>
-                    Kembali
-                </a>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item">
-                            <a href="<?= base_url('pertanyaan') ?>">Pertanyaan</a>
-                        </li>
-                        <li class="breadcrumb-item active" aria-current="page">
-                            <?= strlen($pertanyaan['judul']) > 30 ? substr($pertanyaan['judul'], 0, 30) . '...' : $pertanyaan['judul'] ?>
-                        </li>
-                    </ol>
-                </nav>
-            </div>
-            <h1 class="page-title">PERTANYAAN</h1>
+    <div class="header-section">
+        <div class="breadcrumb-nav">
+            <a href="<?= base_url('pertanyaan') ?>" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Kembali
+            </a>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="<?= base_url('pertanyaan') ?>">Pertanyaan</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <?= strlen($pertanyaan['judul']) > 30 ? substr($pertanyaan['judul'], 0, 30) . '...' : $pertanyaan['judul'] ?>
+                    </li>
+                </ol>
+            </nav>
         </div>
+        <h1 class="page-title">PERTANYAAN</h1>
+    </div>
 
     <section>
         <!-- Card Pertanyaan -->
@@ -962,21 +643,24 @@
             <!-- Konten Pertanyaan -->
             <h2 class="question-title"><?= esc($pertanyaan['judul']); ?></h2>
             <?php if (!empty($pertanyaan['hashtags'])): ?>
-                <?php 
+                <?php
                 $hashtags = json_decode($pertanyaan['hashtags'], true);
-                if (is_array($hashtags) && !empty($hashtags)): 
+                if (is_array($hashtags) && !empty($hashtags)):
                 ?>
-                  <div class="question-hashtags">
-                    <?php foreach ($hashtags as $tag): ?>
-                        <a href="#" class="question-hashtag">#<?= $tag ?></a>
-                    <?php endforeach; ?>
-                  </div>
+                    <div class="question-hashtags">
+                        <?php foreach ($hashtags as $tag): ?>
+                            <a href="#" class="question-hashtag">#<?= $tag ?></a>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
-              <?php endif; ?>
+            <?php endif; ?>
             <div class="question-content"><?= $pertanyaan['deskripsi']; ?></div>
-            
-            <!-- Like Button dan Jumlah Like Pertanyaan-->
-            <div class="text-end mt-3">
+
+            <!-- Tombol Report Like Button dan Jumlah Like Pertanyaan bersebelahan di ujung kanan-->
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-outline-danger me-2" onclick="showReportPertanyaanModal(<?= $pertanyaan['id_pertanyaan'] ?>)">
+                    <i class="fas fa-flag"></i> Laporkan
+                </button>
                 <button onclick="likePertanyaan(<?= $pertanyaan['id_pertanyaan'] ?>)"
                     class="btn btn-sm <?= ($pertanyaanlike['has_liked'] ?? false) ? 'btn-primary' : 'btn-outline-primary' ?>">
                     <i class="fas fa-thumbs-up"></i>
@@ -984,6 +668,24 @@
                 </button>
             </div>
 
+            <!-- Modal untuk gambar besar -->
+            <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="imageModalLabel">Gambar Besar</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <img id="modalImage" src="" class="img-fluid" alt="Gambar Besar">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <a id="downloadLink" href="" class="btn btn-primary" download>Unduh Gambar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- File Lampiran Pertanyaan -->
             <?php if (!empty($pertanyaan['file_attachment'])) : ?>
@@ -1177,6 +879,17 @@
                                                 </div>
                                             </div>
                                         <?php endif; ?>
+                                        <!-- Report Button -->
+                                        <?php if (isset($_SESSION['id']) && $_SESSION['id'] != $j['id_penjawab']): ?>
+                                            <div class="text-end mt-3">
+                                                <button class="btn btn-sm btn-outline-danger"
+                                                    onclick="showReportJawabanModal(<?= $j['id_jawaban'] ?>)">
+                                                    <i class="fas fa-flag"></i> Laporkan
+                                                </button>
+                                            </div>
+                                        <?php endif; ?>
+                                        <!-- End Report Button -->
+
 
                                         <!-- Like Button dan Jumlah Like -->
                                         <div class="text-end mt-3">
@@ -1279,7 +992,82 @@
     </div>
 </div>
 
+
+<!-- Modal Report Pertanyaan -->
+<div class="modal fade" id="PertanyaanreportModal" tabindex="-1" aria-labelledby="PertanyaanreportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="PertanyaanreportModalLabel">
+                    <i class="fas fa-flag text-danger"></i> Laporkan Pertanyaan
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reportFormPertanyaan">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="reportReason" class="form-label">Alasan Laporan</label>
+                        <textarea class="form-control" id="reportReason" name="alasan" rows="4"
+                            placeholder="Silakan berikan alasan mengapa Anda melaporkan pertanyaan ini..." required></textarea>
+                        <div class="invalid-feedback">
+                            Alasan laporan tidak boleh kosong.
+                        </div>
+                    </div>
+                    <!-- Alert untuk menampilkan pesan -->
+                    <div id="reportAlert" class="alert d-none" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Batal
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="submitReportBtn">
+                        <i class="fas fa-flag"></i> Laporkan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Report Jawaban -->
+<div class="modal fade" id="JawabanreportModal" tabindex="-1" aria-labelledby="JawabanreportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="JawabanreportModalLabel">
+                    <i class="fas fa-flag text-danger"></i> Laporkan Jawaban
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reportFormJawaban">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="reportReason" class="form-label">Alasan Laporan</label>
+                        <textarea class="form-control" id="reportReasonjawaban" name="alasanjawaban" rows="4"
+                            placeholder="Silakan berikan alasan mengapa Anda melaporkan pertanyaan ini..." required></textarea>
+                        <div class="invalid-feedback">
+                            Alasan laporan tidak boleh kosong.
+                        </div>
+                    </div>
+                    <!-- Alert untuk menampilkan pesan -->
+                    <div id="reportAlertjawaban" class="alert d-none" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Batal
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="submitReportBtnjawaban">
+                        <i class="fas fa-flag"></i> Laporkan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
     // File Upload Handler
     const fileUploadArea = document.getElementById('fileUploadArea');
@@ -1553,6 +1341,236 @@
         url.searchParams.set('sort', sort);
         window.location = url;
     }
+
+
+</script>
+
+<script>
+    // Global variables
+    let currentQuestionId = null;
+    const PertanyaanreportModal = new bootstrap.Modal(document.getElementById('PertanyaanreportModal'));
+    const reportFormPertanyaan = document.getElementById('reportFormPertanyaan');
+    const reportAlert = document.getElementById('reportAlert');
+    const submitBtn = document.getElementById('submitReportBtn');
+    const reasonTextarea = document.getElementById('reportReason');
+
+    // Function to show modal
+    function showReportPertanyaanModal(questionId) {
+        currentQuestionId = questionId;
+        reportFormPertanyaan.reset();
+        hideAlert();
+        enableForm();
+        PertanyaanreportModal.show();
+
+        setTimeout(() => {
+            reasonTextarea.focus();
+        }, 300);
+    }
+
+    // Function to show alert
+    function showAlert(message, type = 'info') {
+        reportAlert.className = `alert alert-${type}`;
+        reportAlert.textContent = message;
+        reportAlert.classList.remove('d-none');
+    }
+
+    // Function to hide alert
+    function hideAlert() {
+        reportAlert.classList.add('d-none');
+    }
+
+    // Function to disable form during submission
+    function disableForm() {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+        reasonTextarea.disabled = true;
+    }
+
+    // Function to enable form
+    function enableForm() {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-flag"></i> Laporkan';
+        reasonTextarea.disabled = false;
+    }
+
+    // Handle form submission - gunakan FormData untuk kompatibilitas maksimal
+    reportFormPertanyaan.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const alasan = reasonTextarea.value.trim();
+        if (!alasan) {
+            showAlert('Alasan laporan tidak boleh kosong.', 'danger');
+            return;
+        }
+
+        if (alasan.length < 5) {
+            showAlert('Alasan laporan minimal 5 karakter.', 'danger');
+            return;
+        }
+
+        if (!currentQuestionId) {
+            showAlert('ID pertanyaan tidak valid.', 'danger');
+            return;
+        }
+
+        disableForm();
+        hideAlert();
+
+        // Gunakan FormData untuk mengirim data
+        const formData = new FormData();
+        formData.append('alasan', alasan);
+
+        fetch(`/pertanyaan/report/${currentQuestionId}`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                return response.text().then(text => {
+                    console.log('Raw response:', text);
+
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        throw new Error('Response bukan JSON valid: ' + text);
+                    }
+                });
+            })
+            .then(data => {
+                console.log('Parsed data:', data);
+
+                if (data.status === 'success') {
+                    showAlert(data.message, 'success');
+
+                    setTimeout(() => {
+                        PertanyaanreportModal.hide();
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showAlert(data.message || 'Terjadi kesalahan saat melaporkan pertanyaan.', 'danger');
+                    enableForm();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Terjadi kesalahan: ' + error.message, 'danger');
+                enableForm();
+            });
+    });
+
+    // Reset form when modal is hidden
+    document.getElementById('PertanyaanreportModal').addEventListener('hidden.bs.modal', function() {
+        reportFormPertanyaan.reset();
+        hideAlert();
+        enableForm();
+        currentQuestionId = null;
+    });
+
+    // Auto-resize textarea
+    reasonTextarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    console.log('Report Modal System Loaded Successfully');
+</script>
+
+<script>
+    // function to show report modal for jawaban
+    let currentJawabanId = null;
+    const JawabanreportModal = new bootstrap.Modal(document.getElementById('JawabanreportModal'));
+    const reportFormJawaban = document.getElementById('reportFormJawaban');
+    const reportAlertJawaban = document.getElementById('reportAlertjawaban');
+    const submitBtnJawaban = document.getElementById('submitReportBtnjawaban');
+    const reasonTextareaJawaban = document.getElementById('reportReasonjawaban');
+    // Function to show modal
+    function showReportJawabanModal(jawabanId) {
+        currentJawabanId = jawabanId;
+        reportFormJawaban.reset();
+        hideAlertJawaban();
+        enableFormJawaban();
+        JawabanreportModal.show();
+
+        setTimeout(() => {
+            reasonTextareaJawaban.focus();
+        }, 300);
+    }
+    // Function to show alert
+    function showAlertJawaban(message, type = 'info') {
+        reportAlertJawaban.className = `alert alert-${type}`;
+        reportAlertJawaban.textContent = message;
+        reportAlertJawaban.classList.remove('d-none');
+    }
+    // Function to hide alert
+    function hideAlertJawaban() {
+        reportAlertJawaban.classList.add('d-none');
+    }
+    // Function to disable form during submission
+    function disableFormJawaban() {
+        submitBtnJawaban.disabled = true;
+        submitBtnJawaban.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+        reasonTextareaJawaban.disabled = true;
+    }
+    // Function to enable form
+    function enableFormJawaban() {
+        submitBtnJawaban.disabled = false;
+        submitBtnJawaban.innerHTML = '<i class="fas fa-flag"></i> Laporkan';
+        reasonTextareaJawaban.disabled = false;
+    }   
+    // Handle form submission - gunakan FormData untuk kompatibilitas maksimal
+    reportFormJawaban.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alasanjawaban = reasonTextareaJawaban.value.trim();
+        if (!alasanjawaban) {
+            showAlertJawaban('Alasan laporan tidak boleh kosong.', 'danger');
+            return;
+        }
+        disableFormJawaban();
+        hideAlertJawaban();
+        // Gunakan FormData untuk mengirim data
+        const formData = new FormData();
+        formData.append('alasanjawaban', alasanjawaban);
+        formData.append('jawaban_id', currentJawabanId);
+        // Kirim data ke server
+        try {
+            const response = await fetch(`/pertanyaan/report-jawaban/${currentJawabanId}`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                showAlertJawaban(data.message, 'success');
+                setTimeout(() => {
+                    JawabanreportModal.hide();
+                    window.location.reload();
+                }, 2000);
+            } else {
+                showAlertJawaban(data.message || 'Terjadi kesalahan saat melaporkan jawaban.', 'danger');
+                enableFormJawaban();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showAlertJawaban('Terjadi kesalahan: ' + error.message, 'danger');
+            enableFormJawaban();
+        }
+    });
+    // Reset form when modal is hidden
+    document.getElementById('JawabanreportModal').addEventListener('hidden.bs.modal', () => {
+        reportFormJawaban.reset();
+        hideAlertJawaban();
+        enableFormJawaban();
+        currentJawabanId = null;
+    });
+    // Auto-resize textarea
+    reasonTextareaJawaban.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
 </script>
 
 

@@ -8,6 +8,8 @@ use App\Models\ModulQnA\PertanyaanModel;
 use App\Models\ModulUtama\UserModel;
 use App\Models\ModulQnA\LikeModel;
 use App\Models\ModulQnA\PertanyaanLikeModel;
+use App\Models\PertanyaanReportModel;
+use App\Models\JawabanReportModel;
 use Config\Services;
 use Codeigniter\Exceptions\PageNotFoundException;
 use Config\Database;
@@ -18,6 +20,8 @@ class TanyaJawab extends BaseController
     protected $jawabanModel;
     protected $userModel;
     protected $pertanyaanLikeModel;
+    protected $pertanyaanReportModel;
+    protected $jawabanReportModel;
     protected $likeModel;
 
     public function __construct()
@@ -25,6 +29,8 @@ class TanyaJawab extends BaseController
         $this->pertanyaanModel = new PertanyaanModel();
         $this->jawabanModel = new JawabanModel();
         $this->pertanyaanLikeModel = new PertanyaanLikeModel();
+        $this->pertanyaanReportModel = new PertanyaanReportModel();
+        $this->jawabanReportModel = new JawabanReportModel();
         $this->userModel = new UserModel();
         $this->likeModel = new LikeModel();
     }
@@ -35,10 +41,18 @@ class TanyaJawab extends BaseController
         $selectedTag = $this->request->getVar('tag'); // Parameter untuk filter berdasarkan tag
 
         if ($keyword || $selectedTag) {
-            $pertanyaan = $this->pertanyaanModel->searchWithTags($keyword, $selectedTag);
+            // Panggil searchWithTags dan langsung chain dengan operasi lainnya
+            $pertanyaanQuery = $this->pertanyaanModel->searchWithTags($keyword, $selectedTag);
         } else {
-            $pertanyaan = $this->pertanyaanModel;
+            // Untuk kasus tanpa filter, tetap perlu join untuk konsistensi data
+                $pertanyaanQuery = $this->pertanyaanModel
+                ->select('pertanyaan.*, users.nama_lengkap, users.avatar, COUNT(jawaban.id_jawaban) as total_jawaban')
+                ->join('users', 'users.id = pertanyaan.id_penanya', 'left')
+                ->join('jawaban', 'jawaban.id_pertanyaan = pertanyaan.id_pertanyaan', 'left')
+                ->groupBy('pertanyaan.id_pertanyaan, users.nama_lengkap, users.avatar');
         }
+
+        $pertanyaanQuery->where('pertanyaan.report_count <=', 5);
 
         // Ambil semua hashtag yang ada untuk sidebar
         $allHashtags = $this->pertanyaanModel->getAllHashtags();
@@ -49,17 +63,30 @@ class TanyaJawab extends BaseController
             'keyword' => $keyword,
             'selectedTag' => $selectedTag,
             'active' => 'qna',
-            'pertanyaan' => $pertanyaan->orderBy('created_at', 'desc')->paginate(10, 'pertanyaan'),
-            'pager' => $pertanyaan->pager,
+            'pertanyaan' => $pertanyaanQuery->orderBy('pertanyaan.created_at', 'desc')->paginate(10, 'pertanyaan'),
+            'pager' => $this->pertanyaanModel->pager,
             'allHashtags' => $allHashtags
         ];
+        
+        return view('PortalUtama/modul_qna/index', $data);
+    }
 
-        if (isset($_SESSION['id']) && $_SESSION['role'] != 'user') {
-            session()->setFlashdata("gagal", "Hanya pengguna yang memiliki akses fitur ini di portal utama");
-            return redirect()->to("/admin/qna");
-        } else {
-            return view('PortalUtama/modul_qna/index', $data);
+    public function myQuestions()
+    {
+        $data = [
+            'title' => 'Pertanyaan Saya | Ruwai Jurai',
+            'active' => 'qna',
+            'pertanyaan' => $this->pertanyaanModel->getQuestionsByUserId(session()->get('id')),
+            'validation' => Services::validation()
+        ];
+
+        // Periksa apakah pengguna sudah login
+        if (!session()->has('id')) {
+            session()->setFlashdata("gagal", "Harap masuk terlebih dahulu jika ingin melihat pertanyaan Anda");
+            return redirect()->to("/masuk");
         }
+
+        return view('PortalUtama/modul_qna/myquestion', $data);
     }
 
     public function buatpertanyaan()
@@ -416,6 +443,12 @@ class TanyaJawab extends BaseController
                 'likes' => 0 // Default likes = 0
             ]);
 
+            // Update status pertanyaan menjadi terjawab apabila id logged in adalah bukan penanya
+            $pertanyaan = $this->pertanyaanModel->find($id_pertanyaan);
+            if ($pertanyaan && $pertanyaan['id_penanya'] != session()->get('id')) {
+                $this->pertanyaanModel->update($id_pertanyaan, ['status' => 1]);
+            }
+            
             // Set flashdata untuk pesan sukses
             session()->setFlashdata('sukses', 'Jawaban berhasil ditambahkan');
             return redirect()->to("/pertanyaan/$id_pertanyaan");
@@ -516,6 +549,7 @@ class TanyaJawab extends BaseController
     }
 
 
+    // Fungsi untuk menghapus jawaban
     public function hapusJawaban($id_jawaban)
     {
         $jawabanModel = new JawabanModel();
@@ -671,10 +705,7 @@ class TanyaJawab extends BaseController
     public function hapusPertanyaan($id_pertanyaan)
     {
 
-
         $pertanyaanModel = new PertanyaanModel();
-
-
 
         // Dapatkan data pertanyaan untuk mendapatkan id_penanya sebelum dihapus
         $pertanyaan = $pertanyaanModel->find($id_pertanyaan);
@@ -795,4 +826,304 @@ class TanyaJawab extends BaseController
             return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
         }
     }
+
+    // Fungsi untuk mereport pertanyaan
+    public function reportPertanyaan($id_pertanyaan)
+    {
+        // Set header untuk JSON response
+        $this->response->setContentType('application/json');
+
+        // Periksa apakah pengguna sudah login
+        if (!session()->has('id')) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Harap masuk terlebih dahulu jika ingin melaporkan pertanyaan'
+            ]);
+        }
+
+        if ($this->request->getMethod() !== 'POST') {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Metode request tidak valid'
+            ]);
+        }
+
+        try {
+            // Ambil user_id dari session login saat ini
+            $user_id = session()->get('id'); // atau session()->get('user_id') sesuai key session Anda
+            
+            // Ambil data dari request
+            $alasan = $this->request->getPost('alasan');
+            if (empty($alasan)) {
+                $jsonData = $this->request->getJSON(true);
+                $alasan = $jsonData['alasan'] ?? '';
+            }
+            
+            // Validasi input
+            $alasan = trim($alasan);
+            if (empty($alasan)) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Alasan laporan tidak boleh kosong'
+                ]);
+            }
+
+            if (strlen($alasan) < 5) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Alasan laporan minimal 5 karakter'
+                ]);
+            }
+
+            // Gunakan query builder langsung untuk cek pertanyaan exists
+            $db = \Config\Database::connect();
+            
+            // Cek apakah pertanyaan exists - coba beberapa kemungkinan tabel dan primary key
+            $pertanyaan = null;
+            $possible_configs = [
+                ['table' => 'pertanyaan', 'pk' => 'id_pertanyaan'],
+                ['table' => 'pertanyaan', 'pk' => 'id'],
+                ['table' => 'pertanyaans', 'pk' => 'id_pertanyaan'],
+                ['table' => 'pertanyaans', 'pk' => 'id'],
+                ['table' => 'questions', 'pk' => 'id'],
+            ];
+
+            foreach ($possible_configs as $config) {
+                try {
+                    if ($db->tableExists($config['table'])) {
+                        $query = $db->table($config['table'])
+                                ->where($config['pk'], $id_pertanyaan)
+                                ->get();
+                        $result = $query->getRowArray();
+                        
+                        if ($result) {
+                            $pertanyaan = $result;
+                            log_message('debug', "Found question in table: {$config['table']} with PK: {$config['pk']}");
+                            break;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+
+            if (!$pertanyaan) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Pertanyaan tidak ditemukan'
+                ]);
+            }
+
+            // Cek user tidak bisa melaporkan pertanyaan sendiri
+            if ($pertanyaan['id_penanya'] == $user_id) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Anda tidak dapat melaporkan pertanyaan yang Anda buat sendiri'
+                ]);
+            }
+
+
+            // Cek apakah user sudah pernah melaporkan pertanyaan ini
+            $existingReport = $db->table('alasan_report_pertanyaan')
+                ->where('id_pertanyaan', $id_pertanyaan)
+                ->where('id_user', $user_id) // Gunakan user_id dari session
+                ->get()
+                ->getRowArray();
+
+            if ($existingReport) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Anda sudah pernah melaporkan pertanyaan ini'
+                ]);
+            }
+
+            // Opsional: Cek apakah user tidak melaporkan pertanyaan sendiri
+            // (Hanya jika Anda ingin mencegah user melaporkan pertanyaan sendiri)
+            // Lewati bagian ini jika tidak diperlukan validasi tersebut
+            
+            // Simpan laporan dengan user_id dari session
+            $reportData = [
+                'id_pertanyaan' => (int)$id_pertanyaan,
+                'id_user' => (int)$user_id, // Gunakan user_id dari session login
+                'alasan' => $alasan,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $inserted = $db->table('alasan_report_pertanyaan')->insert($reportData);
+            
+            if (!$inserted) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Gagal menyimpan laporan ke database'
+                ]);
+            }
+
+            // Set flashdata untuk halaman
+            session()->setFlashdata('sukses', 'Pertanyaan berhasil dilaporkan. Terima kasih atas partisipasi Anda.');
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'message' => 'Pertanyaan berhasil dilaporkan. Terima kasih!'
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error in reportPertanyaan: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    // Fungsi untuk mereport jawaban
+    public function reportJawaban($id_jawaban)
+    {
+        // Set header untuk JSON response
+        $this->response->setContentType('application/json');
+
+        // Periksa apakah pengguna sudah login
+        if (!session()->has('id')) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Harap masuk terlebih dahulu jika ingin melaporkan pertanyaan'
+            ]);
+        }
+
+        if ($this->request->getMethod() !== 'POST') {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Metode request tidak valid'
+            ]);
+        }
+
+        try {
+            // Ambil user_id dari session login saat ini
+            $user_id = session()->get('id'); // atau session()->get('user_id') sesuai key session Anda
+            
+            // Ambil data dari request
+            $alasanjawaban = $this->request->getPost('alasanjawaban');
+            if (empty($alasanjawaban)) {
+                $jsonData = $this->request->getJSON(true);
+                $alasanjawaban = $jsonData['alasanjawaban'] ?? '';
+            }
+            
+            // Validasi input
+            $alasanjawaban = trim($alasanjawaban);
+            if (empty($alasanjawaban)) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Alasan laporan tidak boleh kosong'
+                ]);
+            }
+
+            if (strlen($alasanjawaban) < 5) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Alasan laporan minimal 5 karakter'
+                ]);
+            }
+
+            // Gunakan query builder langsung untuk cek pertanyaan exists
+            $db = \Config\Database::connect();
+            
+            // Cek apakah pertanyaan exists - coba beberapa kemungkinan tabel dan primary key
+            $jawaban = null;
+            $possible_configs = [
+                ['table' => 'jawaban', 'pk' => 'id_jawaban'],
+                ['table' => 'jawaban', 'pk' => 'id'],
+                ['table' => 'jawabans', 'pk' => 'id_jawaban'],
+                ['table' => 'jawabans', 'pk' => 'id'],
+                ['table' => 'answers', 'pk' => 'id'],
+            ];
+
+            foreach ($possible_configs as $config) {
+                try {
+                    if ($db->tableExists($config['table'])) {
+                        $query = $db->table($config['table'])
+                                ->where($config['pk'], $id_jawaban)
+                                ->get();
+                        $result = $query->getRowArray();
+                        
+                        if ($result) {
+                            $jawaban = $result;
+                            log_message('debug', "Found question in table: {$config['table']} with PK: {$config['pk']}");
+                            break;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+
+            if (!$jawaban) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Pertanyaan tidak ditemukan'
+                ]);
+            }
+
+            
+            // cek user tidak bisa melaporkan jawaban sendiri
+            if ($jawaban['id_penjawab'] == $user_id) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Anda tidak dapat melaporkan jawaban yang Anda buat sendiri'
+                ]);
+            }
+
+            // Cek apakah user sudah pernah melaporka jawaban ini
+            $existingReport = $db->table('alasan_report_jawaban')
+                ->where('id_jawaban', $id_jawaban)
+                ->where('id_user', $user_id) // Gunakan user_id dari session
+                ->get()
+                ->getRowArray();
+
+            if ($existingReport) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Anda sudah pernah melaporkan jawaban ini'
+                ]);
+            }
+
+            // Opsional: Cek apakah user tidak melaporkan pertanyaan sendiri
+            // (Hanya jika Anda ingin mencegah user melaporkan pertanyaan sendiri)
+            // Lewati bagian ini jika tidak diperlukan validasi tersebut
+            
+            // Simpan laporan dengan user_id dari session
+            $reportData = [
+                'id_jawaban' => (int)$id_jawaban,
+                'id_user' => (int)$user_id, // Gunakan user_id dari session login
+                'alasan' => $alasanjawaban,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $inserted = $db->table('alasan_report_jawaban')->insert($reportData);
+            
+            if (!$inserted) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Gagal menyimpan laporan ke database'
+                ]);
+            }
+
+
+            // Set flashdata untuk halaman
+            session()->setFlashdata('sukses', 'Jawaban berhasil dilaporkan. Terima kasih atas partisipasi Anda.');
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'message' => 'Jawaban berhasil dilaporkan. Terima kasih!'
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error in reportPertanyaan: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+            ]);
+        }
+    }
+
 }

@@ -26,7 +26,9 @@ $routes->post('pertanyaan/like-question/(:num)', 'ModulQnA\TanyaJawab::likeQuest
 $routes->get('pertanyaan/download/(:num)', 'ModulQnA\TanyaJawab::downloadpertanyaan/$1');
 $routes->get('jawaban/download/(:num)', 'ModulQnA\TanyaJawab::downloadjawaban/$1');
 $routes->get('pertanyaan/search-hashtags', 'ModulQnA\TanyaJawab::searchHashtags');
-
+$routes->get('pertanyaan-saya', 'ModulQnA\TanyaJawab::myQuestions', ['filter' => 'isLoggedIn']);
+$routes->post('pertanyaan/report/(:num)', 'ModulQnA\TanyaJawab::reportPertanyaan/$1');
+$routes->post('pertanyaan/report-jawaban/(:num)', 'ModulQnA\TanyaJawab::reportJawaban/$1');
 $routes->delete('jawaban/(:num)', 'ModulQnA\TanyaJawab::hapusJawaban/$1');
 
 $routes->get('chat', 'PortalUtama\Chat::index', ['filter' => 'isLoggedIn']);

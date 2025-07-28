@@ -15,7 +15,12 @@ class JawabanModel extends Model
         'file_attachment',
         'file_type',
         'file_size',
-        'likes'
+        'likes',
+        'created_at',
+        'updated_at',
+        'status', // Tambahkan kolom status
+        'report_count', // Tambahkan kolom report_count
+        'reason' // Tambahkan kolom reason untuk laporan
     ];
 
     protected $useTimestamps = true;

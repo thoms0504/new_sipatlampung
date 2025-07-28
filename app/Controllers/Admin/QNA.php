@@ -57,7 +57,8 @@ class QNA extends BaseController
                         'likes_jawaban' => $likes_jawaban ?? 0,
                         'status' => $p['status'],
                         'id_pertanyaan' => $p['id_pertanyaan'],
-                        'created_at' => $p['created_at']
+                        'created_at' => $p['created_at'],
+                        'report_count' => $p['report_count']
                     ];
                 }
             }
@@ -66,87 +67,10 @@ class QNA extends BaseController
         // Kirim data ke view
         return view('Admin/ModulQnA/index', $data);
     }
+    // Fungsi untuk membuat tabel manajemen report pertanyaan
 
-    public function save()
-    {
-        // Validasi input
-        $rules = [
-            'judul' => [
-                'rules' => 'required|min_length[10]|max_length[255]',
-                'errors' => [
-                    'required' => 'Judul pertanyaan harus diisi',
-                    'min_length' => 'Judul pertanyaan minimal 10 karakter',
-                    'max_length' => 'Judul pertanyaan maksimal 255 karakter'
-                ]
-            ],
-            'deskripsi' => [
-                'rules' => 'required|min_length[20]',
-                'errors' => [
-                    'required' => 'Deskripsi pertanyaan harus diisi',
-                    'min_length' => 'Deskripsi pertanyaan minimal 20 karakter'
-                ]
-            ]
-        ];
 
-        // Validasi file jika ada
-        $file = $this->request->getFile('file_attachment');
-        if ($file && $file->isValid()) {
-            $rules['file_attachment'] = [
-                'rules' => 'uploaded[file_attachment]|max_size[file_attachment,5120]|ext_in[file_attachment,jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx]',
-                'errors' => [
-                    'uploaded' => 'File harus dipilih',
-                    'max_size' => 'Ukuran file maksimal 5MB',
-                    'ext_in' => 'Format file harus JPG, PNG, GIF, PDF, DOC, DOCX, XLS, atau XLSX'
-                ]
-            ];
-        }
 
-        if (!$this->validate($rules)) {
-            session()->setFlashdata('errors', $this->validator->getErrors());
-            return redirect()->back()->withInput();
-        }
-
-        // Siapkan data untuk disimpan
-        $data = [
-            'id_penanya' => session()->get('user_id'), // Asumsi user_id tersimpan di session
-            'judul' => $this->request->getPost('judul'),
-            'deskripsi' => $this->request->getPost('deskripsi'),
-            'status' => 0 // Default status belum dijawab
-        ];
-
-        // Handle file upload jika ada
-        if ($file && $file->isValid()) {
-            $uploadResult = $this->pertanyaaModel->handleFileUpload($file);
-            if ($uploadResult) {
-                $data['file_attachment'] = $uploadResult['file_name'];
-                $data['file_type'] = $uploadResult['file_type'];
-                $data['file_size'] = $uploadResult['file_size'];
-            } else {
-                session()->setFlashdata('error', 'Gagal mengupload file');
-                return redirect()->back()->withInput();
-            }
-        }
-
-        // Simpan ke database
-        if ($this->pertanyaaModel->save($data)) {
-            session()->setFlashdata('success', 'Pertanyaan berhasil dikirim');
-            return redirect()->to('/pertanyaan');
-        } else {
-            session()->setFlashdata('error', 'Gagal menyimpan pertanyaan');
-            return redirect()->back()->withInput();
-        }
-    }
-
-    public function downloadFile($fileName)
-    {
-        $filePath = WRITEPATH . 'uploads/pertanyaan/' . $fileName;
-
-        if (!file_exists($filePath)) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('File tidak ditemukan');
-        }
-
-        return $this->response->download($filePath, null);
-    }
 
     public function hapusPertanyaan($id_pertanyaan)
     {

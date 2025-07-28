@@ -32,14 +32,6 @@
                                        <?= $validation->getError('username'); ?>
                                    </div>
                                </div>
-                               <div class="col-md-12 mb-3">
-                                   <label class="labels">Alamat Email</label>
-                                   <input type="email" class="form-control <?= ($validation->hasError('email')) ? 'is-invalid' : ''; ?>" placeholder="Alamat Email" value="<?= (old('email')) ? old('email') : $user['email']; ?>" name="email">
-                                   <div class="invalid-feedback">
-                                       <?= $validation->getError('email'); ?>
-                                   </div>
-                               </div>
-                               
                            </div>
                            <button class="btn btn-primary profile-button" type="submit">Perbarui Profil</button>
                        </form>

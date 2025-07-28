@@ -45,6 +45,7 @@
 
     .app-subtitle {
         font-size: 0.9rem;
+        color: #e3f2fd;
 
         margin: 5px 0 0 0;
         line-height: 1.4;

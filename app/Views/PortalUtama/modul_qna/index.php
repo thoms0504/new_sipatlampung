@@ -152,6 +152,80 @@
     line-height: 1.6;
   }
 
+  /* User Avatar and Info Styles */
+  .user-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e5e7eb;
+    margin-right: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .user-avatar:hover {
+    border-color: #3b82f6;
+    transform: scale(1.05);
+  }
+
+  .user-details {
+    flex: 1;
+  }
+
+  .user-name {
+    font-weight: 600;
+    color: #374151;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .user-meta {
+    color: #6b7280;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .user-badge {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  /* Default avatar for users without profile image */
+  .user-avatar-default {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #1e40af);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-right: 1rem;
+    border: 3px solid #e5e7eb;
+    transition: all 0.3s ease;
+  }
+
+  .user-avatar-default:hover {
+    border-color: #3b82f6;
+    transform: scale(1.05);
+  }
+
   .alert-success-custom {
     background: linear-gradient(135deg, #10b981, #059669);
     border: none;
@@ -211,6 +285,7 @@
   .hashtag-list {
     max-height: 400px;
     overflow-y: auto;
+    overflow-x: hidden
   }
 
   .hashtag-item {
@@ -319,6 +394,18 @@
     .hashtag-list {
       max-height: 200px;
     }
+
+    .user-info {
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .user-avatar,
+    .user-avatar-default {
+      margin-right: 0;
+      margin-bottom: 0.5rem;
+    }
   }
 </style>
 
@@ -401,7 +488,34 @@
           </div>
         <?php else : ?>
           <?php foreach ($pertanyaan as $p) : ?>
+            
             <div class="question-card" onclick="window.location='/pertanyaan/<?= $p['id_pertanyaan']; ?>'">
+              <!-- User Information Section -->
+              <div class="user-info">
+                <?php if (!empty($p['avatar']) && file_exists(FCPATH . 'admin/img/users')): ?>
+                  <img src="<?= base_url('admin/img/users') ?>" 
+                       alt="Avatar <?= $p['avatar'] ?? 'User' ?>" 
+                       class="user-avatar">
+                <?php else: ?>
+                  <div class="user-avatar-default">
+                    <?= strtoupper(substr($p['nama_lengkap'] ?? 'U', 0, 1)) ?>
+                  </div>
+                <?php endif; ?>
+                
+                <div class="user-details">
+                  <div class="user-name"><?= $p['nama_lengkap'] ?? 'Anonymous User' ?></div>
+                  <div class="user-meta">
+                    <i class="fas fa-clock"></i>
+                    <span><?= date('d M Y, H:i', strtotime($p['created_at'] ?? date('Y-m-d H:i:s'))) ?></span>
+                    <?php if (isset($p['']) && $p['user_verified']): ?>
+                      <span class="user-badge">
+                        <i class="fas fa-check"></i> Terverifikasi
+                      </span>
+                    <?php endif; ?>
+                  </div>
+                </div>
+              </div>
+
               <div class="d-flex justify-content-between align-items-start mb-2">
                 <h5 class="question-title mb-0"><?= $p['judul']; ?></h5>
               </div>
@@ -425,7 +539,7 @@
               <p class="question-content"><?= word_limiter(str_replace('<br />', "", $p["deskripsi"]), 50) ?></p>
               <div class="d-flex justify-content-between align-items-center mt-3">
                 <span style="color: #6b7280; font-size: 0.9rem;">
-                  <i class="fas fa-clock me-1"></i>
+                  <i class="fas fa-eye me-1"></i>
                   Baca selengkapnya
                 </span>
                 <div class="d-flex align-items-center gap-3">
@@ -433,6 +547,12 @@
                     <i class="fas fa-heart" style="color: #ef4444; margin-right: 0.4rem;"></i>
                     <span style="color: #ef4444; font-weight: 600; font-size: 0.9rem;">
                       <?= $p['likes'] ?? 0 ?>
+                    </span>
+                  </div>
+                  <div class="d-flex align-items-center" style="background: rgba(59, 130, 246, 0.1); padding: 0.3rem 0.8rem; border-radius: 12px;">
+                    <i class="fas fa-comments" style="color: #3b82f6; margin-right: 0.4rem;"></i>
+                    <span style="color: #3b82f6; font-weight: 600; font-size: 0.9rem;">
+                      <?= $p['total_jawaban'] ?? 0 ?>
                     </span>
                   </div>
                   <i class="fas fa-arrow-right" style="color: #3b82f6;"></i>

@@ -18,6 +18,11 @@ class PertanyaanModel extends Model
         'status',
         'likes',
         'hashtags', // Tambahkan kolom hashtags
+        'report_count', // Tambahkan kolom report_count
+        'created_at',
+        'updated_at', 
+        'reason'
+        
     ];
 
     protected $useTimestamps = true;
@@ -268,17 +273,23 @@ class PertanyaanModel extends Model
     public function searchWithTags($keyword = null, $selectedTag = null)
     {
         $builder = $this->builder();
+        $builder->select('pertanyaan.*, users.nama_lengkap, users.avatar, COUNT(jawaban.id_jawaban) as total_jawaban')
+            ->join('users', 'users.id = pertanyaan.id_penanya', 'left')
+            ->join('jawaban', 'jawaban.id_pertanyaan = pertanyaan.id_pertanyaan', 'left')
+            ->groupBy('pertanyaan.id_pertanyaan, users.nama_lengkap, users.avatar');
+           
+
 
         if ($keyword) {
             $builder->groupStart()
-                ->like('judul', $keyword)
-                ->orLike('deskripsi', $keyword)
+                ->like('pertanyaan.judul', $keyword)
+                ->orLike('pertanyaan.deskripsi', $keyword)
                 ->groupEnd();
         }
 
         if ($selectedTag) {
             // Search dalam JSON hashtags menggunakan JSON_CONTAINS
-            $builder->like('hashtags', '"' . $selectedTag . '"');
+            $builder->like('pertanyaan.hashtags', '"' . $selectedTag . '"');
         }
 
         return $this;
@@ -452,5 +463,34 @@ class PertanyaanModel extends Model
        
         return $builder->get()->getResultArray();
     }
+
+    public function getQuestionById($id_pertanyaan)
+    {
+        return $this->where('id_pertanyaan', $id_pertanyaan)
+            ->first();
+    }
+
+    public function getQuestionsByUserId($id_penanya)
+    {
+        return $this->where('id_penanya', $id_penanya)
+            ->findAll();
+    }
+
+    // Fungsi untuk mendapatkan report count dari tabel update_report_pertanyaan
+    public function getReportCount($id_pertanyaan)
+    {
+        $builder = $this->db->table('alasan_report_pertanyaan');
+        $builder->select('COUNT(*) as report_count');
+        $builder->where('id_pertanyaan', $id_pertanyaan);
+        $query = $builder->get();
+
+        if ($query->getNumRows() > 0) {
+            return $query->getRow()->report_count;
+        }
+
+        return 0; // Jika tidak ada report, kembalikan 0
+    }
+    
+
 }
 
